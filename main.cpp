@@ -84,6 +84,14 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(g_hHook, nCode, wParam, lParam);
 }
 
+BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
+    const DWORD TITLE_SIZE = 1024;
+    WCHAR windowTitle[TITLE_SIZE];
+
+
+    return TRUE;
+}
+
 int main() {
     // Set the keyboard hook
     g_hHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, GetModuleHandle(NULL), 0);

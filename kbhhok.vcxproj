@@ -24,6 +24,7 @@
     <ProjectGuid>{349aee41-e2a5-4d47-890d-787ea5f72b15}</ProjectGuid>
     <RootNamespace>kbhhok</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>i3win</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
