@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <iostream>
+using namespace std;
 
 // Global hook handle
 HHOOK g_hHook;
@@ -88,6 +89,34 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     const DWORD TITLE_SIZE = 1024;
     WCHAR windowTitle[TITLE_SIZE];
 
+    WINDOWINFO info;
+
+    GetWindowInfo(hwnd, &info);
+
+
+
+    int length = ::GetWindowTextLength(hwnd);
+    if (0 == length) return TRUE;
+
+    TCHAR* buffer;
+    buffer = new TCHAR[length + 1];
+    memset(buffer, 0, (length + 1) * sizeof(TCHAR));
+
+    GetWindowText(hwnd, buffer, length + 1);
+
+
+    RECT wSize = info.rcWindow;
+
+
+    if (wSize.left > 0 || wSize.top > 0 || wSize.right > 0 || wSize.bottom > 0) {
+        wcout << buffer;
+        printf("LEFT %d, TOP %D, RIGHT %d, BOTTOM %d\n", wSize.left, wSize.top, wSize.right, wSize.bottom);
+    }
+
+
+
+    delete[] buffer;
+    //printf("%d\n", buffer);
 
     return TRUE;
 }
@@ -102,6 +131,7 @@ int main() {
         return 1;
     }
 
+    EnumWindows(handleWindow, NULL);
     // Message loop or other application logic goes here
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
