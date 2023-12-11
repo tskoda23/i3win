@@ -115,7 +115,7 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     }
 
     if (wSize.left > 0 || wSize.top > 0 || wSize.right > 0 || wSize.bottom > 0) {
-        printf("  LEFT %d, TOP %D, RIGHT %d, BOTTOM %d\n", wSize.left, wSize.top, wSize.right, wSize.bottom);
+        printf("  LEFT %d, TOP %d, RIGHT %d, BOTTOM %d\n", wSize.left, wSize.top, wSize.right, wSize.bottom);
     }
 
     delete[] buffer;
