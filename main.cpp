@@ -27,7 +27,6 @@ bool isRaltPressed = false;
 bool isRshiftPressed = false;
 bool debug = true;
 
-
 // Keyboard hook procedure
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode >= 0) {
@@ -86,14 +85,18 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
+
+    // Exit early if window is not visible
+    if (!IsWindowVisible(hwnd)) {
+        return TRUE;
+    }
+
     const DWORD TITLE_SIZE = 1024;
     WCHAR windowTitle[TITLE_SIZE];
 
     WINDOWINFO info;
 
     GetWindowInfo(hwnd, &info);
-
-
 
     int length = ::GetWindowTextLength(hwnd);
     if (0 == length) return TRUE;
@@ -104,16 +107,16 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
 
     GetWindowText(hwnd, buffer, length + 1);
 
-
     RECT wSize = info.rcWindow;
 
-
-    if (wSize.left > 0 || wSize.top > 0 || wSize.right > 0 || wSize.bottom > 0) {
-        wcout << buffer;
-        printf("LEFT %d, TOP %D, RIGHT %d, BOTTOM %d\n", wSize.left, wSize.top, wSize.right, wSize.bottom);
+    char nameBuffer[256];
+    if (GetWindowTextA(hwnd, nameBuffer, sizeof(nameBuffer)) > 0) {
+        std::cout << "Window Title: " << nameBuffer << std::endl;
     }
 
-
+    if (wSize.left > 0 || wSize.top > 0 || wSize.right > 0 || wSize.bottom > 0) {
+        printf("  LEFT %d, TOP %D, RIGHT %d, BOTTOM %d\n", wSize.left, wSize.top, wSize.right, wSize.bottom);
+    }
 
     delete[] buffer;
     //printf("%d\n", buffer);
