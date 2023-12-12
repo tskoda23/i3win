@@ -49,6 +49,8 @@ bool operator<(const WindowInfo& lhs, const WindowInfo& rhs)
 
 std::set<WindowInfo> activeWindows;
 
+WindowInfo focusedWindow;
+
 std::string getWindowName(HWND hwnd) {
     char nameBuffer[256];
 
@@ -57,20 +59,9 @@ std::string getWindowName(HWND hwnd) {
     return std::string(nameBuffer);
 }
 
-void registerNewWindow(HWND hwnd, RECT wSize) {
-    std::string name = getWindowName(hwnd);
-
-    if (IsWindowVisible(hwnd) && !IsIconic(hwnd))
+void registerNewWindow(WindowInfo windowInfo) {
+    if (IsWindowVisible(windowInfo.hwnd) && !IsIconic(windowInfo.hwnd))
     {
-        WindowInfo windowInfo = {
-            hwnd,
-            name,
-            wSize.left,
-            wSize.top,
-            wSize.right,
-            wSize.bottom
-        };
-
         if (!windowInfo.isHidden()) {
             activeWindows.insert(windowInfo);
         }
@@ -130,7 +121,6 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         }
     }
 
-    // Call the next hook in the hook chain
     return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
 }
 
@@ -139,33 +129,44 @@ bool IsMainWindow(HWND hwnd) {
     return ((style & WS_CHILD) == 0) && (GetWindow(hwnd, GW_OWNER) == nullptr) && IsWindowVisible(hwnd);
 }
 
-BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
-    // Exit early if window is popup or something not a real window
-    if (!IsMainWindow(hwnd)) {
-        return TRUE;
-    }
+bool hasTitle(HWND hwnd){
+    int length = ::GetWindowTextLength(hwnd);
+    return length > 0;
+}
 
-    const DWORD TITLE_SIZE = 1024;
-    WCHAR windowTitle[TITLE_SIZE];
-
+WindowInfo getWindowInfo(HWND hwnd){
     WINDOWINFO info;
-
     GetWindowInfo(hwnd, &info);
 
-    int length = ::GetWindowTextLength(hwnd);
-    if (0 == length) return TRUE;
+    RECT rect = info.rcWindow;
 
-    TCHAR* buffer;
-    buffer = new TCHAR[length + 1];
-    memset(buffer, 0, (length + 1) * sizeof(TCHAR));
+    std::string title = getWindowName(hwnd);
 
-    GetWindowText(hwnd, buffer, length + 1);
+    WindowInfo windowInfo = {
+            hwnd,
+            title,
+            rect.left,
+            rect.top,
+            rect.right,
+            rect.bottom
+    };
 
-    delete[] buffer;
+    return windowInfo;
+}
 
-    RECT wSize = info.rcWindow;
 
-    registerNewWindow(hwnd, wSize);
+BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
+    HWND fWinH= GetForegroundWindow();
+    focusedWindow = getWindowInfo(fWinH);
+
+    // Exit early if window is popup or something not a real window
+    if (!IsMainWindow(hwnd) || !hasTitle(hwnd)) {
+        return TRUE;    
+    }
+
+    WindowInfo windowInfo = getWindowInfo(hwnd);
+
+    registerNewWindow(windowInfo);
 
     return TRUE;
 }
@@ -183,7 +184,7 @@ void CALLBACK WindowWatcherHookProc(
 )
 {
     // Exit early if window is popup or something not a real window
-    if (!IsMainWindow(hwnd)) {
+    if (!IsMainWindow(hwnd) || !hasTitle(hwnd)) {
         return;
     }
 
@@ -197,6 +198,8 @@ void CALLBACK WindowWatcherHookProc(
         std::cout << "  " << window.hwnd << " - " << window.name << std::endl;
         printf("    %d %d %d %d\n", window.left, window.top, window.right, window.bottom);
     }
+
+    printf("    %d %d %d %d\n", focusedWindow.left, focusedWindow.top, focusedWindow.right, focusedWindow.bottom);
 }
 
 int main() {
