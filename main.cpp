@@ -27,10 +27,14 @@ bool isRaltPressed = false;
 bool isRshiftPressed = false;
 bool debug = true;
 
+int g_screenWidth = GetSystemMetrics(SM_CXSCREEN);
+int g_screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
 struct WindowInfo
 {
     HWND hwnd;
-    std::string name;
+    std::string title;
+    std::string className;
     LONG left;
     LONG top;
     LONG right;
@@ -38,6 +42,10 @@ struct WindowInfo
 
     bool isHidden() {
         return left < 0 && right < 0 && top < 0 && bottom < 0;
+    }
+
+    bool isHwndEqualToNumericValue(DWORD_PTR numericValue) const {
+        return reinterpret_cast<DWORD_PTR>(hwnd) == numericValue;
     }
 };
 
@@ -59,8 +67,22 @@ std::string getWindowName(HWND hwnd) {
     return std::string(nameBuffer);
 }
 
+std::string getWindowClassName(HWND hwnd) {
+    char className[256];
+
+    GetClassNameA(hwnd, className, sizeof(className));
+
+    return std::string(className);
+}
+
+// Filter out internal windows OS stuff that's always shown
+bool isWindowsClassName(std::string className) {
+    return className == "Progman"
+        || className == "Windows.UI.Core.CoreWindow";
+}
+
 void registerNewWindow(WindowInfo windowInfo) {
-    if (IsWindowVisible(windowInfo.hwnd) && !IsIconic(windowInfo.hwnd))
+    if (IsWindowVisible(windowInfo.hwnd) && !IsIconic(windowInfo.hwnd) && !isWindowsClassName(windowInfo.className))
     {
         if (!windowInfo.isHidden()) {
             activeWindows.insert(windowInfo);
@@ -141,10 +163,13 @@ WindowInfo getWindowInfo(HWND hwnd){
     RECT rect = info.rcWindow;
 
     std::string title = getWindowName(hwnd);
+    std::string className = getWindowClassName(hwnd);
+
 
     WindowInfo windowInfo = {
             hwnd,
             title,
+            className,
             rect.left,
             rect.top,
             rect.right,
@@ -171,6 +196,45 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     return TRUE;
 }
 
+void buildStackedLayout() {
+    int windowCount = 0;
+    int padding = 50;
+
+    for (const WindowInfo& window : activeWindows)
+    {
+        int spacing = padding * windowCount;
+
+        MoveWindow(window.hwnd,
+            0,                                // X
+            spacing,                          // Y
+            g_screenWidth,                    // Width
+            g_screenHeight - spacing,         // Height
+            TRUE);
+
+        windowCount++;
+    }
+}
+
+void buildSplitLayout() {
+    int windowsCount = activeWindows.size();
+
+    int windowWidth = g_screenWidth / windowsCount;
+    
+    int windowCount = 0;
+
+    for (const WindowInfo& window : activeWindows)
+    {
+        MoveWindow(window.hwnd, 
+            windowCount * windowWidth,      // X
+            0,                              // Y
+            windowWidth,                    // Width
+            g_screenHeight,                 // Height
+            TRUE);
+
+        windowCount++;
+    }
+}
+
 // Listens for any window changes (create/destroy/update), updates the `activeWindows` list
 // and prints out the latest state.
 void CALLBACK WindowWatcherHookProc(
@@ -195,7 +259,7 @@ void CALLBACK WindowWatcherHookProc(
     std::cout << "Currently active windows: " << activeWindows.size() << std::endl;
     for (const WindowInfo& window : activeWindows)
     {
-        std::cout << "  " << window.hwnd << " - " << window.name << std::endl;
+        std::cout << "  " << window.hwnd << " - " << window.className << " - " << window.title << std::endl;
         printf("    %d %d %d %d\n", window.left, window.top, window.right, window.bottom);
     }
 
