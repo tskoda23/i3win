@@ -2,4 +2,4 @@
 
 mkdir build
 cd build
-cl ..\main.cpp user32.lib kernel32.lib  dwmapi.lib
+cl -Zi ..\main.cpp user32.lib kernel32.lib  dwmapi.lib
