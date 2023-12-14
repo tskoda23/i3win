@@ -181,14 +181,18 @@ void buildSplitLayout() {
 
     for (const WindowInfo& window : activeWindows)
     {
-        MoveWindow(window.hwnd, 
+        if (!MoveWindow(window.hwnd,
             windowCount * windowWidth,      // X
             0,                              // Y
             windowWidth,                    // Width
             g_screenHeight,                 // Height
-            TRUE);
-
-        windowCount++;
+            TRUE)) {
+            DWORD error = GetLastError();
+            printf("SYSTEM ERROR CODE %d", error);
+        }
+        else {
+            windowCount++;
+        }
     }
 }
 
@@ -233,7 +237,8 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             std:string message = "";
 
             if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '1')) {
-                message = "Alt + 1 pressed! Switch to workspace 1\n";
+                message = "Alt + 1 pressed! buildSplitLayout! 1\n";
+                buildSplitLayout();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
                 message = "Alt + 2 pressed! Switch to workspace 2\n";
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '3')) {
