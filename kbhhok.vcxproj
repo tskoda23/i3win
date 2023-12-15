@@ -130,8 +130,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
-	<ClCompile Include="src/window.cpp" />
-	<ClCompile Include="src/layouts.cpp" />
+    <ClCompile Include="src/window.cpp" />
+    <ClCompile Include="src/layouts.cpp" />
+    <ClCompile Include="src/screen.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,7 +13,6 @@ bool operator<(const Window& lhs, const Window& rhs)
     return lhs.hwnd < rhs.hwnd;
 }
 
-
 std::string getWindowTitle(HWND hwnd) {
     char buffer[256];
 

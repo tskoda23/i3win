@@ -1,12 +1,14 @@
-#include <windows.h>
+﻿#include <windows.h>
 #include <psapi.h>
 #include <winerror.h>
 #include <dwmapi.h>
-#include <set>
+#include <vector>
+#include <unordered_map>
 #include <iostream>
 
 #include "layouts.h"
 #include "window.h"
+#include "screen.h"
 
 using namespace std;
 
@@ -15,8 +17,7 @@ bool debug = true;
 int g_screenWidth = GetSystemMetrics(SM_CXSCREEN);
 int g_screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-std::set<Window> activeWindows;
-Window focusedWindow;
+Screen screen;
 
 // Filter out internal windows OS stuff that's always shown
 bool isWindowsClassName(std::string className) {
@@ -29,14 +30,14 @@ BOOL IsWindowCloaked(HWND hwnd)
     return SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED,&isCloaked, sizeof(isCloaked))) && isCloaked;
 }
 
-void registerNewWindow(Window Window) {
+void registerNewWindow(Window window) {
     // pass WM_DISPLAYCHANGE if resolution changed
     // check if it has title
     // 
-    if (IsWindowVisible(Window.hwnd) && IsWindow(Window.hwnd) && !IsWindowCloaked(Window.hwnd) && !IsIconic(Window.hwnd) && !isWindowsClassName(Window.className))
+    if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !isWindowsClassName(window.className))
     {
-        if (!Window.isHidden()) {
-            activeWindows.insert(Window);
+        if (!window.isHidden()) {
+            screen.addWindow(window);
         }
     }
 }
@@ -56,10 +57,10 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     Window newFwin = getWindowFromHWND(fWinH);
     newFwin.isInitialized = 1;
 
-    if(focusedWindow.isInitialized == 0 || focusedWindow.hwnd != newFwin.hwnd){
-        focusedWindow = newFwin;
+    if(screen.focusedWindow.isInitialized == 0 || screen.focusedWindow.hwnd != newFwin.hwnd){
+        screen.setFocusedWindow(newFwin);
         if(debug){
-            std::cout << "FOCUSED IS INIT? " << focusedWindow.isInitialized << " - " << focusedWindow.hwnd << " - " << focusedWindow.className << " - " << focusedWindow.title << std::endl;
+            std::cout << "FOCUSED IS INIT? " << screen.focusedWindow.isInitialized << " - " << screen.focusedWindow.title << std::endl;
         }
     }
 
@@ -87,31 +88,30 @@ void CALLBACK WindowWatcherHookProc(
     DWORD         dwmsEventTime
 )
 {
-    // Exit early if the event is coming from something that is not a real window, like a dialog or popup
-    if (!IsMainWindow(hwnd)) {
+    /*if (!IsMainWindow(hwnd) || !IsWindow(hwnd) || IsIconic(hwnd)) {
         return;
-    }
+    }*/
 
-    switch (event)
+    /*switch (event)
     {
         case EVENT_OBJECT_CREATE:
-            // std::cout << "new " << title << " " << exeName << std::endl;
+            std::cout << "new " << std::endl;
             break;
         case EVENT_OBJECT_HIDE:
-            // std::cout << "hide " << title << " " << exeName << std::endl;
+            std::cout << "hide " << std::endl;
             break;
         case EVENT_OBJECT_SHOW:
-            // std::cout << "show " << title << " " << exeName << std::endl;
+            std::cout << "show " << std::endl;
             break;
         case EVENT_OBJECT_DESTROY:
-            // std::cout << "destroy " << title << " " << exeName << std::endl;
+            std::cout << "destroy " << std::endl;
             break;
         default:
             printf("UNKNOWN EVENT \n");
         break;
-    }
+    }*/
 
-    activeWindows.clear();
+    screen.reset();
     EnumWindows(handleWindow, NULL);
 
    if(debug){
@@ -123,7 +123,7 @@ void CALLBACK WindowWatcherHookProc(
         //     printf("    %d %d %d %d\n", window.left, window.top, window.right, window.bottom);
         // }
 
-        printf("Focused: %d %d %d %d\n", focusedWindow.left, focusedWindow.top, focusedWindow.right, focusedWindow.bottom);
+        printf("Focused: %d %d %d %d\n", screen.focusedWindow.left, screen.focusedWindow.top, screen.focusedWindow.right, screen.focusedWindow.bottom);
     }
 }
 
@@ -135,19 +135,27 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             std:string message = "";
 
             if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '1')) {
-                message = "Alt + 1 pressed! buildSplitLayout! 1\n";
-                buildSplitLayout(activeWindows, g_screenWidth, g_screenHeight);
+                message = "Alt + 1 pressed! buildSplitLayout!\n";
+                screen.setActiveLayout(LAYOUT_TYPE_SPLIT);
+                buildLayout(screen);
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
-                message = "Alt + 2 pressed! buildStackLayout! 1\n";
-                buildStackedLayout(activeWindows, g_screenWidth, g_screenHeight);
+               // message = "Alt + 2 pressed! buildStackLayout!\n";
+                screen.setActiveLayout(LAYOUT_TYPE_STACKED);
+                buildLayout(screen);
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '3')) {
-                message = "Alt + 3 pressed! Switch to workspace 3\n";
+                //message = "Alt + 3 pressed! Moving focused window left\n";
+                screen.moveFocusedWindowLeft();
+                buildLayout(screen);
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '4')) {
-                message = "Alt + 4 pressed! Switch to workspace 4\n";
+                //message = "Alt + 4 pressed! Moving focused window right\n";
+                screen.moveFocusedWindowRight();
+                buildLayout(screen);
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '5')) {
                 message = "Alt + 5 pressed! Switch to workspace 5\n";
+                screen.moveFocusLeft();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '6')) {
                 message = "Alt + 6 pressed! Switch to workspace 6\n";
+                screen.moveFocusRight();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '7')) {
                 message = "Alt + 7 pressed! Switch to workspace 7\n";
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '8')) {
@@ -176,13 +184,15 @@ int main() {
         return 1;
     }
 
-    HWINEVENTHOOK hWindowWatcherHook = SetWinEventHook(EVENT_OBJECT_CREATE, EVENT_OBJECT_HIDE, nullptr, WindowWatcherHookProc, 0, 0, WINEVENT_OUTOFCONTEXT);
+    HWINEVENTHOOK hWindowWatcherHook = SetWinEventHook(EVENT_OBJECT_CREATE, EVENT_OBJECT_FOCUS, nullptr, WindowWatcherHookProc, 0, 0, WINEVENT_OUTOFCONTEXT);
 
     if (hWindowWatcherHook == nullptr)
     {
         std::cerr << "Error setting up WinEventHook" << std::endl;
         return 1;
     }
+
+    screen.initialize(LAYOUT_TYPE_NONE, g_screenWidth, g_screenHeight);
 
     // Message loop or other application logic goes here
     MSG msg;

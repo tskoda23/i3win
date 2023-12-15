@@ -1,49 +1,55 @@
 #include "layouts.h"
+#include "screen.h"
 #include "window.h"
 
 #include <windows.h>
 #include <psapi.h>
 #include <winerror.h>
 #include <dwmapi.h>
-#include <set>
+#include <vector>
+#include <unordered_map>
 #include <iostream>
 
-void buildStackedLayout(std::set<Window> windows, int screenWidth, int screenHeight) {
-    int windowCount = 0;
-    int padding = 50;
+const int padding = 50;
+const int taskbarSize = 50;
 
-    for (const Window& window : windows)
-    {
+void buildStackedLayout(Screen screen) {
+    int windowCount = 0;
+
+    for (auto item : screen.positionToWindowMap) {
+        int position = item.first;
+        auto window = screen.windows[item.second];
+
         int spacing = padding * windowCount;
 
         MoveWindow(window.hwnd,
             0,                                // X
             spacing,                          // Y
-            screenWidth,                    // Width
-            screenHeight - spacing,         // Height
+            screen.screenWidth,                    // Width
+            screen.screenHeight - spacing,         // Height
             TRUE);
 
         windowCount++;
     }
 }
 
-void buildSplitLayout(std::set<Window> windows, int screenWidth, int screenHeight) {
-    int windowsCount = windows.size();
+void buildSplitLayout(Screen screen) {
+    int windowsCount = screen.windows.size();
 
-    int windowWidth = screenWidth / windowsCount;
+    int windowWidth = screen.screenWidth / windowsCount;
 
     int windowCount = 0;
 
-    for (const Window& window : windows)
-    {
-        std::cout << "Moving ===> " << window.exeName << std::endl;
+    for (auto item : screen.positionToWindowMap) {
+        int position = item.first;
+        auto window = screen.windows[item.second];
 
         bool isWindowMovedSuccessfully = MoveWindow(
             window.hwnd,
-            windowCount * windowWidth,      // X
-            0,                              // Y
-            windowWidth,                    // Width
-            screenHeight,                 // Height
+            windowCount * windowWidth,          // X
+            0,                                  // Y
+            windowWidth,                        // Width
+            screen.screenHeight - taskbarSize,     // Height
             TRUE);
 
         if (!isWindowMovedSuccessfully) {
@@ -53,5 +59,20 @@ void buildSplitLayout(std::set<Window> windows, int screenWidth, int screenHeigh
         else {
             windowCount++;
         }
+    }
+}
+
+void buildLayout(Screen screen) {
+    switch (screen.layoutType)
+    {
+    case LAYOUT_TYPE_STACKED:
+        buildStackedLayout(screen);
+        break;
+    case LAYOUT_TYPE_SPLIT:
+        buildSplitLayout(screen);
+        break;
+    default:
+        printf("Unknown layout type");
+        break;
     }
 }

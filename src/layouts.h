@@ -1,5 +1,12 @@
 #include "window.h"
-#include <set>
+#include <vector>
+#include "screen.h"
+#include <unordered_map>
 
-void buildStackedLayout(std::set<Window> windows, int screenWidth, int screenHeight);
-void buildSplitLayout(std::set<Window> windows, int screenWidth, int screenHeight);
+#ifndef LAYOUTS_H
+#define LAYOUTS_H
+
+void buildLayout(Screen screen);
+
+
+#endif
