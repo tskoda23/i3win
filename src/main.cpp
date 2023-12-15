@@ -5,6 +5,9 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
+#include <chrono>
+#include <thread>
+#include <future>
 
 #include "layouts.h"
 #include "window.h"
@@ -76,57 +79,6 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     return TRUE;
 }
 
-// Listens for any window changes (create/destroy/update), updates the `activeWindows` list
-// and prints out the latest state.
-void CALLBACK WindowWatcherHookProc(
-    HWINEVENTHOOK hWinEventHook,
-    DWORD         event,
-    HWND          hwnd,
-    LONG          idObject,
-    LONG          idChild,
-    DWORD         dwEventThread,
-    DWORD         dwmsEventTime
-)
-{
-    /*if (!IsMainWindow(hwnd) || !IsWindow(hwnd) || IsIconic(hwnd)) {
-        return;
-    }*/
-
-    /*switch (event)
-    {
-        case EVENT_OBJECT_CREATE:
-            std::cout << "new " << std::endl;
-            break;
-        case EVENT_OBJECT_HIDE:
-            std::cout << "hide " << std::endl;
-            break;
-        case EVENT_OBJECT_SHOW:
-            std::cout << "show " << std::endl;
-            break;
-        case EVENT_OBJECT_DESTROY:
-            std::cout << "destroy " << std::endl;
-            break;
-        default:
-            printf("UNKNOWN EVENT \n");
-        break;
-    }*/
-
-    screen.reset();
-    EnumWindows(handleWindow, NULL);
-
-   if(debug){
-        // std::system("cls");
-        // std::cout << "Currently active windows: " << activeWindows.size() << std::endl;
-        // for (const Window& window : activeWindows)
-        // {
-        //     std::cout << "  " << window.hwnd << " - " << window.className << " - " << window.title <<  " - " << window.exeName << std::endl;
-        //     printf("    %d %d %d %d\n", window.left, window.top, window.right, window.bottom);
-        // }
-
-        printf("Focused: %d %d %d %d\n", screen.focusedWindow.left, screen.focusedWindow.top, screen.focusedWindow.right, screen.focusedWindow.bottom);
-    }
-}
-
 LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
         KBDLLHOOKSTRUCT* pKeyInfo = (KBDLLHOOKSTRUCT*)lParam;
@@ -176,6 +128,37 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
+void printWindowStats(Screen screen) {
+    std::system("cls");
+    std::cout << "Currently active windows: " << screen.windows.size() << std::endl;
+        
+    for (auto item : screen.positionToWindowMap) {
+        int position = item.first;
+        auto window = screen.windows[item.second];
+
+        std::cout << position << " - " << window.title;
+
+        if (window.hwnd == screen.focusedWindow.hwnd) {
+            std::cout << " - FOCUSED";
+        }
+
+        std::cout << std::endl;
+    }
+}
+
+void checkWindowState() {
+    while (true) {
+        screen.reset();
+        EnumWindows(handleWindow, NULL);
+        
+        buildLayout(screen);
+
+        printWindowStats(screen);
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 int main() {
     g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
 
@@ -184,15 +167,10 @@ int main() {
         return 1;
     }
 
-    HWINEVENTHOOK hWindowWatcherHook = SetWinEventHook(EVENT_OBJECT_CREATE, EVENT_OBJECT_FOCUS, nullptr, WindowWatcherHookProc, 0, 0, WINEVENT_OUTOFCONTEXT);
-
-    if (hWindowWatcherHook == nullptr)
-    {
-        std::cerr << "Error setting up WinEventHook" << std::endl;
-        return 1;
-    }
-
     screen.initialize(LAYOUT_TYPE_NONE, g_screenWidth, g_screenHeight);
+
+    // Chechk window state each second and update layout
+    std::async(std::launch::async, checkWindowState);
 
     // Message loop or other application logic goes here
     MSG msg;
@@ -203,7 +181,6 @@ int main() {
 
     // Remove hooks after done
     UnhookWindowsHookEx(g_keyboardHook);
-    UnhookWinEvent(hWindowWatcherHook);
 
     return 0;
 }

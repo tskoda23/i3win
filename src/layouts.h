@@ -8,5 +8,4 @@
 
 void buildLayout(Screen screen);
 
-
 #endif

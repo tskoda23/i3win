@@ -54,7 +54,7 @@ void buildSplitLayout(Screen screen) {
 
         if (!isWindowMovedSuccessfully) {
             DWORD error = GetLastError();
-            printf("SYSTEM ERROR CODE %d", error);
+            printf("SYSTEM ERROR CODE %d\n", error);
         }
         else {
             windowCount++;
@@ -62,7 +62,12 @@ void buildSplitLayout(Screen screen) {
     }
 }
 
+
 void buildLayout(Screen screen) {
+
+    // Clean up any invalid data before building the UI
+    screen.normalizeIndexes();
+
     switch (screen.layoutType)
     {
     case LAYOUT_TYPE_STACKED:
@@ -72,7 +77,7 @@ void buildLayout(Screen screen) {
         buildSplitLayout(screen);
         break;
     default:
-        printf("Unknown layout type");
+        printf("Unknown layout type, doing nothing.\n");
         break;
     }
 }

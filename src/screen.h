@@ -35,6 +35,8 @@ struct Screen {
     void moveFocusedWindowRight();
 
     Window getWindowAtPosition(int position);
+    void normalizeIndexes();
+
 };
 
 #endif

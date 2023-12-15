@@ -1,6 +1,7 @@
-#include <iostream>
+﻿#include <iostream>
 #include <windows.h>
 #include <unordered_map>
+#include <set>
 #include "window.h"
 #include "screen.h"
 
@@ -10,28 +11,59 @@ void Screen::initialize(LayoutType layoutType, int screenWidth, int screenHeight
     this->screenHeight = screenHeight;
 }
 
+int counter = 0;
+
 void Screen::addWindow(Window window) {
     bool doesWindowAlreadyExist = windowToPositionMap.find(window.hwnd) != windowToPositionMap.end();
 
-    // if (doesWindowAlreadyExist) {
-    //     /*std::cout << "Exists:" << std::endl;*/
-    // } else {
-        windowToPositionMap[window.hwnd] = windows.size();
-        positionToWindowMap[windows.size()] = window.hwnd;
-    // }
+    if (doesWindowAlreadyExist) {
+        /*std::cout << "Exists:" << std::endl;*/
+    } else {
+        int currentPosition = windowToPositionMap.size();
+        windowToPositionMap[window.hwnd] = currentPosition;
+        positionToWindowMap[currentPosition] = window.hwnd;
+    }
 
     windows[window.hwnd] = window;
+
+    counter++;
+}
+
+// After a window is removed, there will be a leftover index here, so we need to remove it
+void Screen::normalizeIndexes() {
+    std::set<std::pair<int, HWND>> itemsToRemove;
+
+    for (auto item : positionToWindowMap) {
+        int position = item.first;
+        HWND hwnd = item.second;
+
+        bool doesWindowStillExist = windows.find(hwnd) != windows.end();
+
+        if (!doesWindowStillExist) {
+            itemsToRemove.insert(item);
+        }
+    }
+
+    for (auto item : itemsToRemove) {
+        std::cout << "Removing: " << item.first << " - " << std::endl;
+
+        positionToWindowMap.erase(item.first);
+        windowToPositionMap.erase(item.second);
+    }
 }
 
 void Screen::reset() {
-     /*positionToWindowMap.clear();
-    windowToPositionMap.clear();*/
     windows.clear();
 }
 
 void Screen::setFocusedWindow(Window window) {
-    focusedWindow = window;
-    SetForegroundWindow(focusedWindow.hwnd); // TODO: Maybe move this out of this struct?
+    if (window.hwnd != NULL) {
+        focusedWindow = window;
+        SetForegroundWindow(focusedWindow.hwnd); // TODO: Maybe move this out of this struct?
+    }
+    else {
+        printf("ERROR: Focused window is null\n");
+    }
 }
 
 void Screen::setActiveLayout(LayoutType layout) {
@@ -39,6 +71,14 @@ void Screen::setActiveLayout(LayoutType layout) {
 }
 
 void Screen::moveFocusLeft(){
+    normalizeIndexes();
+
+    if (focusedWindow.hwnd == NULL && !windows.empty()) {
+        setFocusedWindow(
+            getWindowAtPosition(0)
+        );
+    }
+
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
     if (focusedWindowIndex > 0) {
@@ -46,11 +86,19 @@ void Screen::moveFocusLeft(){
             getWindowAtPosition(focusedWindowIndex - 1)
         );
     } else {
-        printf("Can't go further.");
+        printf("Can't go further left.\n");
     }
 }
 
 void Screen::moveFocusRight(){
+    normalizeIndexes();
+
+    if (focusedWindow.hwnd == NULL && !windows.empty()) {
+        setFocusedWindow(
+            getWindowAtPosition(0)
+        );
+    }
+
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
     if (focusedWindowIndex < windows.size() - 1) {
@@ -58,7 +106,7 @@ void Screen::moveFocusRight(){
             getWindowAtPosition(focusedWindowIndex + 1)
         );
     } else {
-        printf("Can't go further.");
+        printf("Can't go further right.\n");
     }
 }
 
@@ -69,8 +117,7 @@ Window Screen::getWindowAtPosition(int position) {
 }
 
 void Screen::moveFocusedWindowRight() {
-
-    std::cout << "Focused is " << focusedWindow.title << std::endl;
+    normalizeIndexes();
 
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
@@ -83,11 +130,11 @@ void Screen::moveFocusedWindowRight() {
 
         windowToPositionMap[focusedWindow.hwnd] = focusedWindowIndex + 1;
         windowToPositionMap[positionToWindowMap[focusedWindowIndex]] = focusedWindowIndex;
-    } 
+    }
 }
 
 void Screen::moveFocusedWindowLeft() {
-    std::cout << "Focused is " << focusedWindow.title << std::endl;
+    normalizeIndexes();
 
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
@@ -100,6 +147,5 @@ void Screen::moveFocusedWindowLeft() {
 
         windowToPositionMap[focusedWindow.hwnd] = focusedWindowIndex - 1;
         windowToPositionMap[positionToWindowMap[focusedWindowIndex]] = focusedWindowIndex;
-        
     } 
 }
