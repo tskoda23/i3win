@@ -170,7 +170,7 @@ int main() {
     screen.initialize(LAYOUT_TYPE_NONE, g_screenWidth, g_screenHeight);
 
     // Chechk window state each second and update layout
-    std::async(std::launch::async, checkWindowState);
+    std::future<void> asyncResult = std::async(std::launch::async, checkWindowState);
 
     // Message loop or other application logic goes here
     MSG msg;
