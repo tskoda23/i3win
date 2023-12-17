@@ -29,8 +29,18 @@ void Screen::addWindow(Window window) {
     counter++;
 }
 
-// After a window is removed, there will be a leftover index here, so we need to remove it
-void Screen::normalizeIndexes() {
+// After a window is removed, few things happen:
+// - focused window might be removed, so we need to set it to another one
+// - leftover indexes remain, so we need to remove them
+void Screen::normalizeScreenState() {
+    bool isFocusedWindowKnown = windows.find(focusedWindow.hwnd) != windows.end();
+
+    if (!isFocusedWindowKnown) {
+        int previouslyFocusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
+        focusedWindow = getWindowAtPosition(previouslyFocusedWindowIndex - 1);
+        setFocusedWindow(focusedWindow);
+    }
+
     std::set<std::pair<int, HWND>> itemsToRemove;
 
     for (auto item : positionToWindowMap) {
@@ -71,7 +81,7 @@ void Screen::setActiveLayout(LayoutType layout) {
 }
 
 void Screen::moveFocusLeft(){
-    normalizeIndexes();
+    normalizeScreenState();
 
     if (focusedWindow.hwnd == NULL && !windows.empty()) {
         setFocusedWindow(
@@ -91,7 +101,7 @@ void Screen::moveFocusLeft(){
 }
 
 void Screen::moveFocusRight(){
-    normalizeIndexes();
+    normalizeScreenState();
 
     if (focusedWindow.hwnd == NULL && !windows.empty()) {
         setFocusedWindow(
@@ -117,7 +127,7 @@ Window Screen::getWindowAtPosition(int position) {
 }
 
 void Screen::moveFocusedWindowRight() {
-    normalizeIndexes();
+    normalizeScreenState();
 
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
@@ -134,7 +144,7 @@ void Screen::moveFocusedWindowRight() {
 }
 
 void Screen::moveFocusedWindowLeft() {
-    normalizeIndexes();
+    normalizeScreenState();
 
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
