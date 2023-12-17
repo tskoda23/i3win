@@ -62,11 +62,10 @@ void buildSplitLayout(Screen screen) {
     }
 }
 
-
 void buildLayout(Screen screen) {
 
     // Clean up any invalid data before building the UI
-    screen.normalizeIndexes();
+    screen.normalizeScreenState();
 
     switch (screen.layoutType)
     {

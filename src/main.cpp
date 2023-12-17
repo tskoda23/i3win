@@ -22,6 +22,8 @@ int g_screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
 Screen screen;
 
+std::mutex windowStateMutex;
+
 // Filter out internal windows OS stuff that's always shown
 bool isWindowsClassName(std::string className) {
     return className == "Progman";
@@ -86,6 +88,9 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
             std:string message = "";
 
+            // Lock guard's destructor will unlock the mutex automatically at the end of block
+            std::lock_guard<std::mutex> lock(windowStateMutex);
+
             if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '1')) {
                 message = "Alt + 1 pressed! buildSplitLayout!\n";
                 screen.setActiveLayout(LAYOUT_TYPE_SPLIT);
@@ -148,12 +153,16 @@ void printWindowStats(Screen screen) {
 
 void checkWindowState() {
     while (true) {
+        std::unique_lock<std::mutex> lock(windowStateMutex);
+
         screen.reset();
         EnumWindows(handleWindow, NULL);
         
         buildLayout(screen);
 
         printWindowStats(screen);
+
+        lock.unlock();
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
