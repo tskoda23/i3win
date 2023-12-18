@@ -10,7 +10,8 @@
 enum LayoutType {
     LAYOUT_TYPE_NONE,
     LAYOUT_TYPE_STACKED,
-    LAYOUT_TYPE_SPLIT
+    LAYOUT_TYPE_SPLIT,
+    LAYOUT_TYPE_CENTERED,
 };
 
 struct Screen {

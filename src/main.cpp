@@ -12,6 +12,7 @@
 #include "layouts.h"
 #include "window.h"
 #include "screen.h"
+#include "logger.h"
 
 using namespace std;
 
@@ -65,7 +66,7 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     if(screen.focusedWindow.isInitialized == 0 || screen.focusedWindow.hwnd != newFwin.hwnd){
         screen.setFocusedWindow(newFwin);
         if(debug){
-            std::cout << "FOCUSED IS INIT? " << screen.focusedWindow.isInitialized << " - " << screen.focusedWindow.title << std::endl;
+            //std::cout << "FOCUSED IS INIT? " << screen.focusedWindow.isInitialized << " - " << screen.focusedWindow.title << std::endl;
         }
     }
 
@@ -97,7 +98,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 buildLayout(screen);
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
                // message = "Alt + 2 pressed! buildStackLayout!\n";
-                screen.setActiveLayout(LAYOUT_TYPE_STACKED);
+                screen.setActiveLayout(LAYOUT_TYPE_CENTERED);
                 buildLayout(screen);
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '3')) {
                 //message = "Alt + 3 pressed! Moving focused window left\n";
@@ -160,7 +161,7 @@ void checkWindowState() {
         
         buildLayout(screen);
 
-        printWindowStats(screen);
+        //printWindowStats(screen);    
 
         lock.unlock();
 

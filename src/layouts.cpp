@@ -1,6 +1,7 @@
-#include "layouts.h"
+﻿#include "layouts.h"
 #include "screen.h"
 #include "window.h"
+#include "logger.h"
 
 #include <windows.h>
 #include <psapi.h>
@@ -25,8 +26,8 @@ void buildStackedLayout(Screen screen) {
         MoveWindow(window.hwnd,
             0,                                // X
             spacing,                          // Y
-            screen.screenWidth,                    // Width
-            screen.screenHeight - spacing,         // Height
+            screen.screenWidth,               // Width
+            screen.screenHeight - spacing,    // Height
             TRUE);
 
         windowCount++;
@@ -54,11 +55,61 @@ void buildSplitLayout(Screen screen) {
 
         if (!isWindowMovedSuccessfully) {
             DWORD error = GetLastError();
-            printf("SYSTEM ERROR CODE %d\n", error);
+            logError("Can't move window, error code " + error);
         }
         else {
             windowCount++;
         }
+    }
+}
+
+
+void buildCenteredLayout(Screen screen) {
+    int windowsCount = screen.windows.size();
+
+    // TODO: Make this configurable and stored in settings
+    int centerWindowWidth = screen.screenWidth * 0.5;
+
+    int sideWindowWidth = (screen.screenWidth - centerWindowWidth) / 2;
+    int sideWindowHeight = screen.screenHeight / 2;
+
+    int windowCount = 0;
+
+    for (auto item : screen.positionToWindowMap) {
+        int position = item.first;
+        auto window = screen.windows[item.second];
+
+        if (windowCount == 0) {
+            MoveWindow(
+                window.hwnd,
+                sideWindowWidth,                    // X
+                0,                                  // Y
+                centerWindowWidth,                  // Width
+                screen.screenHeight - taskbarSize,  // Height
+                TRUE);
+        } else if (windowCount < 5) {
+            int yPosition = windowCount % 2 == 0 
+                ? sideWindowHeight 
+                : 0;
+
+            bool isLeftSideWindow = windowCount < 3;
+
+            int xPosition = isLeftSideWindow
+                ? 0 
+                : sideWindowWidth + centerWindowWidth;
+
+            MoveWindow(
+                window.hwnd,
+                xPosition,                    // X
+                yPosition,                   // Y
+                sideWindowWidth,             // Width
+                sideWindowHeight,           // Height
+                TRUE);
+        } else {
+            logError("This layout only supports up to 5 windows!");
+        }
+
+        windowCount++;
     }
 }
 
@@ -69,14 +120,19 @@ void buildLayout(Screen screen) {
 
     switch (screen.layoutType)
     {
+    case LAYOUT_TYPE_NONE:
+        break;
     case LAYOUT_TYPE_STACKED:
         buildStackedLayout(screen);
         break;
     case LAYOUT_TYPE_SPLIT:
         buildSplitLayout(screen);
         break;
+    case LAYOUT_TYPE_CENTERED:
+        buildCenteredLayout(screen);
+        break;
     default:
-        printf("Unknown layout type, doing nothing.\n");
+        logError("Unknown layout type, doing nothing.");
         break;
     }
 }

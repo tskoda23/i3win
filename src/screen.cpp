@@ -4,6 +4,7 @@
 #include <set>
 #include "window.h"
 #include "screen.h"
+#include "logger.h"
 
 void Screen::initialize(LayoutType layoutType, int screenWidth, int screenHeight) {
     this->layoutType = layoutType;
@@ -36,6 +37,7 @@ void Screen::normalizeScreenState() {
     bool isFocusedWindowKnown = windows.find(focusedWindow.hwnd) != windows.end();
 
     if (!isFocusedWindowKnown) {
+        logInfo("Focused window unknown, setting it to the first available one.");
         int previouslyFocusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
         focusedWindow = getWindowAtPosition(previouslyFocusedWindowIndex - 1);
         setFocusedWindow(focusedWindow);
@@ -55,7 +57,7 @@ void Screen::normalizeScreenState() {
     }
 
     for (auto item : itemsToRemove) {
-        std::cout << "Removing: " << item.first << " - " << std::endl;
+        logInfo("Screen cleanup, removing " + item.first);
 
         positionToWindowMap.erase(item.first);
         windowToPositionMap.erase(item.second);
@@ -72,7 +74,7 @@ void Screen::setFocusedWindow(Window window) {
         SetForegroundWindow(focusedWindow.hwnd); // TODO: Maybe move this out of this struct?
     }
     else {
-        printf("ERROR: Focused window is null\n");
+        logError("Can't set focused window as it's null");
     }
 }
 
@@ -96,7 +98,7 @@ void Screen::moveFocusLeft(){
             getWindowAtPosition(focusedWindowIndex - 1)
         );
     } else {
-        printf("Can't go further left.\n");
+        logInfo("Can't go further left.");
     }
 }
 
@@ -116,7 +118,7 @@ void Screen::moveFocusRight(){
             getWindowAtPosition(focusedWindowIndex + 1)
         );
     } else {
-        printf("Can't go further right.\n");
+        logInfo("Can't go further right.");
     }
 }
 
@@ -132,7 +134,7 @@ void Screen::moveFocusedWindowRight() {
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
     if (focusedWindowIndex == windows.size() - 1) {
-        printf(" -- can't move it, already at the edge\n");
+        logInfo("Can't move to right, already at the edge");
         return;
     } else {
         positionToWindowMap[focusedWindowIndex] = positionToWindowMap[focusedWindowIndex + 1];
@@ -149,7 +151,7 @@ void Screen::moveFocusedWindowLeft() {
     auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
 
     if (focusedWindowIndex < 1) {
-        printf(" -- can't move it, already at the edge\n");
+        logInfo("Can't move to left, already at the edge");
         return;
     } else {
         positionToWindowMap[focusedWindowIndex] = positionToWindowMap[focusedWindowIndex - 1];
