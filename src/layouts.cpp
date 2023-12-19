@@ -61,8 +61,7 @@ void buildSplitLayout(Screen screen) {
 void buildCenteredLayout(Screen screen) {
     int windowsCount = screen.windows.size();
 
-    // TODO: Make this configurable and stored in settings
-    int centerWindowWidth = screen.screenWidth * 0.5;
+    int centerWindowWidth = screen.screenWidth * screen.config.getNumericConfigValue("CENTER_LAYOUT_MAIN_WINDOW_WIDTH_PERCENTAGE") / 100;
 
     int sideWindowWidth = (screen.screenWidth - centerWindowWidth) / 2;
     int sideWindowHeight = screen.screenHeight / 2;

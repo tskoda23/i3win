@@ -3,7 +3,6 @@
 #include <winerror.h>
 #include <dwmapi.h>
 #include <vector>
-#include <unordered_map>
 #include <iostream>
 #include <chrono>
 #include <thread>

@@ -1,6 +1,5 @@
 ﻿#include <iostream>
 #include <windows.h>
-#include <unordered_map>
 #include <set>
 #include "window.h"
 #include "screen.h"
@@ -10,6 +9,7 @@ void Screen::initialize(LayoutType layoutType, int screenWidth, int screenHeight
     this->layoutType = layoutType;
     this->screenWidth = screenWidth;
     this->screenHeight = screenHeight;
+    this->config = Config();
 }
 
 int counter = 0;

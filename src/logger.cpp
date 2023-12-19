@@ -10,7 +10,6 @@
 // TODO: Write this in some log file
 
 void logError(std::string error) {
-    // TODO: Write this in some log file
     std::cout << "ERROR: " << error << std::endl;
 }
 
