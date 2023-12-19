@@ -159,3 +159,11 @@ void Screen::moveFocusedWindowLeft() {
         windowToPositionMap[positionToWindowMap[focusedWindowIndex]] = focusedWindowIndex;
     } 
 }
+
+void Screen::closeFocusedWindow() {
+    LRESULT res = ::SendMessage(focusedWindow.hwnd, WM_CLOSE, NULL, NULL);
+    int position = windowToPositionMap[focusedWindow.hwnd];
+
+    windowToPositionMap.erase(focusedWindow.hwnd);
+    positionToWindowMap.erase(position);
+}
