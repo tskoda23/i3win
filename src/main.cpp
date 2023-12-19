@@ -25,8 +25,9 @@ Screen screen;
 std::mutex windowStateMutex;
 
 // Filter out internal windows OS stuff that's always shown
-bool isWindowsClassName(std::string className) {
-    return className == "Progman";
+BOOL IsWindowsClassName(std::string className) {
+    return className == "Progman" ||
+    className == "MultitaskingViewFrame";
 }
 
 BOOL IsWindowCloaked(HWND hwnd)
@@ -38,8 +39,7 @@ BOOL IsWindowCloaked(HWND hwnd)
 void registerNewWindow(Window window) {
     // pass WM_DISPLAYCHANGE if resolution changed
     // check if it has title
-    // 
-    if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !isWindowsClassName(window.className))
+    if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !IsWindowsClassName(window.className))
     {
         if (!window.isHidden()) {
             screen.addWindow(window);
@@ -64,9 +64,6 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
 
     if(screen.focusedWindow.isInitialized == 0 || screen.focusedWindow.hwnd != newFwin.hwnd){
         screen.setFocusedWindow(newFwin);
-        if(debug){
-            //std::cout << "FOCUSED IS INIT? " << screen.focusedWindow.isInitialized << " - " << screen.focusedWindow.title << std::endl;
-        }
     }
 
     // Exit early if window is popup or something not a real window
@@ -91,28 +88,27 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             // Lock guard's destructor will unlock the mutex automatically at the end of block
             std::lock_guard<std::mutex> lock(windowStateMutex);
 
-            if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '1')) {
-                message = "Alt + 1 pressed! buildSplitLayout!\n";
-                screen.setActiveLayout(LAYOUT_TYPE_SPLIT);
+            if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == 'Q'))) {
+                screen.closeFocusedWindow();
                 buildLayout(screen);
-            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
-               // message = "Alt + 2 pressed! buildStackLayout!\n";
-                screen.setActiveLayout(LAYOUT_TYPE_CENTERED);
-                buildLayout(screen);
-            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '3')) {
-                //message = "Alt + 3 pressed! Moving focused window left\n";
+            }else if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == VK_LEFT))) {
                 screen.moveFocusedWindowLeft();
                 buildLayout(screen);
-            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '4')) {
-                //message = "Alt + 4 pressed! Moving focused window right\n";
+            }else if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == VK_RIGHT))) {
                 screen.moveFocusedWindowRight();
                 buildLayout(screen);
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '1')) {
+                message = "Alt + 1 pressed! buildSplitLayout!\n";
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
+                message = "Alt + 2 pressed! buildStackLayout!\n";
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '3')) {
+                message = "Alt + 3 pressed! Moving focused window left\n";
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '4')) {
+                message = "Alt + 4 pressed! Moving focused window right\n";
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '5')) {
                 message = "Alt + 5 pressed! Switch to workspace 5\n";
-                screen.moveFocusLeft();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '6')) {
                 message = "Alt + 6 pressed! Switch to workspace 6\n";
-                screen.moveFocusRight();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '7')) {
                 message = "Alt + 7 pressed! Switch to workspace 7\n";
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '8')) {
@@ -121,7 +117,19 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 message = "Alt + 9 pressed! Switch to workspace 9\n";
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '0')) {
                 message = "Alt + 0 pressed! Switch to workspace 0\n";
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'A')) {
+                message = "Alt + 0 pressed! Switch to workspace 0\n";
+                screen.setActiveLayout(LAYOUT_TYPE_STACKED);
+                buildLayout(screen);
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'B')) {
+                screen.setActiveLayout(LAYOUT_TYPE_SPLIT);
+                buildLayout(screen);
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_LEFT)) {
+                screen.moveFocusLeft();
+            }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_RIGHT)) {
+                screen.moveFocusRight();
             }
+
 
             if(debug){
                 printf("Key Pressed: 0x%X\n", pKeyInfo->vkCode);
@@ -130,7 +138,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         }
     }
 
-    return CallNextHookEx(NULL, nCode, wParam, lParam);
+    return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
 }
 
 void printWindowStats(Screen screen) {
