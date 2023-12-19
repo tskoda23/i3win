@@ -23,14 +23,15 @@ void buildStackedLayout(Screen screen) {
 
         int spacing = padding * windowCount;
 
-        MoveWindow(window.hwnd,
-            0,                                // X
-            spacing,                          // Y
-            screen.screenWidth,               // Width
-            screen.screenHeight - spacing,    // Height
-            TRUE);
+        bool isWindowMovedSuccessfully = window.move(
+            0,
+            spacing,
+            screen.screenWidth,
+            screen.screenHeight - spacing);
 
-        windowCount++;
+        if (isWindowMovedSuccessfully) {
+            windowCount++;
+        }
     }
 }
 
@@ -45,26 +46,17 @@ void buildSplitLayout(Screen screen) {
         int position = item.first;
         auto window = screen.windows[item.second];
 
-        ShowWindow(window.hwnd, SW_RESTORE);
+        bool isWindowMovedSuccessfully = window.move(
+            windowCount * windowWidth,
+            0,
+            windowWidth,
+            screen.screenHeight - taskbarSize);
 
-        bool isWindowMovedSuccessfully = MoveWindow(
-            window.hwnd,
-            windowCount * windowWidth,          // X
-            0,                                  // Y
-            windowWidth,                        // Width
-            screen.screenHeight - taskbarSize,     // Height
-            TRUE);
-
-        if (!isWindowMovedSuccessfully) {
-            DWORD error = GetLastError();
-            logError("Can't move window, error code " + error);
-        }
-        else {
+        if (isWindowMovedSuccessfully) {
             windowCount++;
         }
     }
 }
-
 
 void buildCenteredLayout(Screen screen) {
     int windowsCount = screen.windows.size();
@@ -81,14 +73,14 @@ void buildCenteredLayout(Screen screen) {
         int position = item.first;
         auto window = screen.windows[item.second];
 
+        int xPosition, yPosition, width, height;
+
         if (windowCount == 0) {
-            MoveWindow(
-                window.hwnd,
-                sideWindowWidth,                    // X
-                0,                                  // Y
-                centerWindowWidth,                  // Width
-                screen.screenHeight - taskbarSize,  // Height
-                TRUE);
+            window.move(
+                sideWindowWidth,
+                0,
+                centerWindowWidth,
+                screen.screenHeight - taskbarSize);
         } else if (windowCount < 5) {
             int yPosition = windowCount % 2 == 0 
                 ? sideWindowHeight 
@@ -100,13 +92,11 @@ void buildCenteredLayout(Screen screen) {
                 ? 0 
                 : sideWindowWidth + centerWindowWidth;
 
-            MoveWindow(
-                window.hwnd,
-                xPosition,                    // X
-                yPosition,                   // Y
-                sideWindowWidth,             // Width
-                sideWindowHeight,           // Height
-                TRUE);
+            window.move(
+                xPosition,
+                yPosition,
+                sideWindowWidth,
+                sideWindowHeight);
         } else {
             logError("This layout only supports up to 5 windows!");
         }

@@ -1,10 +1,25 @@
 #include "window.h"
+#include "logger.h"
 #include <iostream>
 #include <windows.h>
 #include <psapi.h>
 
 bool Window::isHidden() {
     return left < 0 && right < 0 && top < 0 && bottom < 0;
+}
+
+bool Window::move(int x, int y, int width, int height) {
+    // Unmaximize if it it's maximized, because otherwise it won't move
+    ShowWindow(hwnd, SW_RESTORE);
+
+    bool isWindowMovedSuccessfully = MoveWindow(hwnd, x, y, width, height, TRUE);
+
+    if (!isWindowMovedSuccessfully) {
+        DWORD error = GetLastError();
+        logError("Can't move window, error code " + error);
+    }
+
+    return isWindowMovedSuccessfully;
 }
 
 // We need to override this for set ordering and uniqueness
