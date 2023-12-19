@@ -45,6 +45,8 @@ void buildSplitLayout(Screen screen) {
         int position = item.first;
         auto window = screen.windows[item.second];
 
+        ShowWindow(window.hwnd, SW_RESTORE);
+
         bool isWindowMovedSuccessfully = MoveWindow(
             window.hwnd,
             windowCount * windowWidth,          // X
