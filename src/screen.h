@@ -37,6 +37,7 @@ struct Screen {
     Window getWindowAtPosition(int position);
     void normalizeScreenState();
 
+    void closeFocusedWindow();
 };
 
 #endif
