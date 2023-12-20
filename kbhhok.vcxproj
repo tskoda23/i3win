@@ -133,6 +133,8 @@
     <ClCompile Include="src/window.cpp" />
     <ClCompile Include="src/layouts.cpp" />
     <ClCompile Include="src/screen.cpp" />
+    <ClCompile Include="src/config.cpp" />
+    <ClCompile Include="src/logger.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

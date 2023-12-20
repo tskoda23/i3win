@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <unordered_map>
 #include "window.h"
+#include "config.h"
 
 #ifndef SCREEN_H
 #define SCREEN_H
@@ -10,11 +11,13 @@
 enum LayoutType {
     LAYOUT_TYPE_NONE,
     LAYOUT_TYPE_STACKED,
-    LAYOUT_TYPE_SPLIT
+    LAYOUT_TYPE_SPLIT,
+    LAYOUT_TYPE_CENTERED,
 };
 
 struct Screen {
     LayoutType layoutType;
+    Config config;
     std::unordered_map<int, HWND> positionToWindowMap;
     std::unordered_map<HWND, int> windowToPositionMap;
     std::unordered_map<HWND, Window> windows;

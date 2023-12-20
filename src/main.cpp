@@ -3,7 +3,6 @@
 #include <winerror.h>
 #include <dwmapi.h>
 #include <vector>
-#include <unordered_map>
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -12,11 +11,13 @@
 #include "layouts.h"
 #include "window.h"
 #include "screen.h"
+#include "logger.h"
 
 using namespace std;
 
 HHOOK g_keyboardHook;
 bool debug = true;
+bool showRealTimeState = false;
 int g_screenWidth = GetSystemMetrics(SM_CXSCREEN);
 int g_screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
@@ -124,6 +125,10 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'B')) {
                 screen.setActiveLayout(LAYOUT_TYPE_SPLIT);
                 buildLayout(screen);
+            }
+            else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'C')) {
+                screen.setActiveLayout(LAYOUT_TYPE_CENTERED);
+                buildLayout(screen);
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_LEFT)) {
                 screen.moveFocusLeft();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_RIGHT)) {
@@ -141,7 +146,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
 }
 
-void printWindowStats(Screen screen) {
+void printWindowState(Screen screen) {
     std::system("cls");
     std::cout << "Currently active windows: " << screen.windows.size() << std::endl;
         
@@ -168,7 +173,9 @@ void checkWindowState() {
         
         buildLayout(screen);
 
-        printWindowStats(screen);
+        if (showRealTimeState) {
+            printWindowState(screen);    
+        }
 
         lock.unlock();
 
