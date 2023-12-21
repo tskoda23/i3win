@@ -1,7 +1,6 @@
 # TODO
 
 ## Functional
-- hide alt-tab window from being shown as active window
 - in split layout, remove extra space between windows
 - add option to change main window sizes (in centered layout, maybe in split one as well)
 - command to move window to start/end
