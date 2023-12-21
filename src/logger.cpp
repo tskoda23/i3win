@@ -1,6 +1,7 @@
 ﻿#include "layouts.h"
 #include "screen.h"
 #include "window.h"
+#include "environment.h"
 
 #include <windows.h>
 #include <psapi.h>
@@ -10,11 +11,8 @@
 #include <chrono>
 #include <ctime>
 
-// TODO: Fix this path
-std::string logsDirPath = "..\\..\\logs\\";
-
-std::string infoFilePath = logsDirPath + "info.txt";
-std::string errorFilePath = logsDirPath + "error.txt";
+std::string infoFilePath = getAppStoragePath() + "info.txt";
+std::string errorFilePath = getAppStoragePath() + "error.txt";
 
 std::string getTimestamp() {
     char buffer[26]; 

@@ -12,8 +12,7 @@
 - hide terminal window when program is running
 
 ## Configuration
-- remember user's settings (currently active layout and other configurable things)
-- restore previously used layout in the start
+- check if config file exists
 
 ## Performance
 - avoid redrawing layout if no new windows appear
