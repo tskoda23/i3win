@@ -94,12 +94,15 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == 'Q'))) {
                 screen.closeFocusedWindow();
                 buildLayout(screen);
+                return CATCH_KEYBOARD_EVENT;
             }else if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == VK_LEFT))) {
                 screen.moveFocusedWindowLeft();
                 buildLayout(screen);
+                return CATCH_KEYBOARD_EVENT;
             }else if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == VK_RIGHT))) {
                 screen.moveFocusedWindowRight();
                 buildLayout(screen);
+                return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '1')) {
                 message = "Alt + 1 pressed! buildSplitLayout!\n";
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
@@ -124,19 +127,22 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 message = "Alt + 0 pressed! Switch to workspace 0\n";
                 screen.setActiveLayout(LAYOUT_TYPE_STACKED);
                 buildLayout(screen);
+                return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'B')) {
                 screen.setActiveLayout(LAYOUT_TYPE_SPLIT);
                 buildLayout(screen);
-            }
-            else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'C')) {
+                return CATCH_KEYBOARD_EVENT;
+            } else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'C')) {
                 screen.setActiveLayout(LAYOUT_TYPE_CENTERED);
                 buildLayout(screen);
+                return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_LEFT)) {
                 screen.moveFocusLeft();
+                return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_RIGHT)) {
                 screen.moveFocusRight();
+                return CATCH_KEYBOARD_EVENT;
             }
-
 
             if(debug){
                 printf("Key Pressed: 0x%X\n", pKeyInfo->vkCode);
