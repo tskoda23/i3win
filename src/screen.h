@@ -1,6 +1,6 @@
 #include <iostream>
 #include <windows.h>
-#include <unordered_map>
+#include <list>
 #include "window.h"
 #include "config.h"
 
@@ -18,17 +18,17 @@ enum LayoutType {
 struct Screen {
     LayoutType layoutType;
     Config config;
-    std::unordered_map<int, HWND> positionToWindowMap;
-    std::unordered_map<HWND, int> windowToPositionMap;
-    std::unordered_map<HWND, Window> windows;
+    std::list<HWND> windowIndexes;
+    std::list<Window> windows;
     Window focusedWindow;
     int screenWidth;
     int screenHeight;
 
     void initialize(LayoutType layoutType, int screenWidth, int screenHeight);
     void addWindow(Window window);  
-    void reset();
+    void onBeforeWindowsRegistered();
     void setFocusedWindow(Window window);
+    void onAfterWindowsRegistered();
     void setActiveLayout(LayoutType layout);
     
     void moveFocusLeft();
@@ -37,8 +37,7 @@ struct Screen {
     void moveFocusedWindowLeft();
     void moveFocusedWindowRight();
 
-    Window getWindowAtPosition(int position);
-    void normalizeScreenState();
+    Window getWindow(HWND hwnd);
 
     void closeFocusedWindow();
 };

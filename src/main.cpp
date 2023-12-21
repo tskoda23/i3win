@@ -79,6 +79,8 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     return TRUE;
 }
 
+int CATCH_KEYBOARD_EVENT = -1;
+
 LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
         KBDLLHOOKSTRUCT* pKeyInfo = (KBDLLHOOKSTRUCT*)lParam;
@@ -150,11 +152,9 @@ void printWindowState(Screen screen) {
     std::system("cls");
     std::cout << "Currently active windows: " << screen.windows.size() << std::endl;
         
-    for (auto item : screen.positionToWindowMap) {
-        int position = item.first;
-        auto window = screen.windows[item.second];
-
-        std::cout << position << " - " << window.title;
+    int position = 0;
+    for (auto window : screen.windows) {
+        std::cout << position++ << " - " << window.title;
 
         if (window.hwnd == screen.focusedWindow.hwnd) {
             std::cout << " - FOCUSED";
@@ -168,8 +168,11 @@ void checkWindowState() {
     while (true) {
         std::unique_lock<std::mutex> lock(windowStateMutex);
 
-        screen.reset();
+        screen.onBeforeWindowsRegistered();
+
         EnumWindows(handleWindow, NULL);
+
+        screen.onAfterWindowsRegistered();
         
         buildLayout(screen);
 
