@@ -1,6 +1,9 @@
 ﻿#include <iostream>
 #include <windows.h>
 #include <set>
+#include <list>
+#include <algorithm>
+#include <iterator>
 #include "window.h"
 #include "screen.h"
 #include "logger.h"
@@ -12,69 +15,76 @@ void Screen::initialize(LayoutType layoutType, int screenWidth, int screenHeight
     this->config = Config();
 }
 
-int counter = 0;
-
 void Screen::addWindow(Window window) {
-    bool doesWindowAlreadyExist = windowToPositionMap.find(window.hwnd) != windowToPositionMap.end();
-
-    if (doesWindowAlreadyExist) {
-        /*std::cout << "Exists:" << std::endl;*/
-    } else {
-        int currentPosition = windowToPositionMap.size();
-        windowToPositionMap[window.hwnd] = currentPosition;
-        positionToWindowMap[currentPosition] = window.hwnd;
-    }
-
-    windows[window.hwnd] = window;
-
-    counter++;
+    windows.push_front(window);
 }
 
-// After a window is removed, few things happen:
-// - focused window might be removed, so we need to set it to another one
-// - leftover indexes remain, so we need to remove them
-void Screen::normalizeScreenState() {
-    bool isFocusedWindowKnown = windows.find(focusedWindow.hwnd) != windows.end();
+void Screen::onBeforeWindowsRegistered() {
+    // Remember indexes of windows to restore their position later
+    windowIndexes.clear();
+    std::transform(windows.begin(), windows.end(), std::front_inserter(windowIndexes),
+        [](const Window& obj) {
+            return obj.hwnd;
+        }
+    );
 
-    if (!isFocusedWindowKnown) {
-        logInfo("Focused window unknown, setting it to the first available one.");
-        int previouslyFocusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
-        focusedWindow = getWindowAtPosition(previouslyFocusedWindowIndex - 1);
-        setFocusedWindow(focusedWindow);
+    // Delete current windows to prepare to receive new ones
+    windows.clear();
+}
+
+void Screen::onAfterWindowsRegistered() {
+    // If there are no saved windows, build the positions list from scratch
+    if (windowIndexes.empty()) {
+        std::transform(windows.begin(), windows.end(), std::front_inserter(windowIndexes),
+            [](const Window& obj) {
+                return obj.hwnd;
+            }
+        );
+        return;
     }
 
-    std::set<std::pair<int, HWND>> itemsToRemove;
+    std::list<Window> newList;
 
-    for (auto item : positionToWindowMap) {
-        int position = item.first;
-        HWND hwnd = item.second;
+    // Map previously saved windows indexes to the new ordered list of windows
+    for (auto hwnd : windowIndexes) {
+         auto window = std::find_if(windows.begin(), windows.end(),
+            [hwnd](const Window& obj) {
+                return obj.hwnd == hwnd;
+            }
+        );
 
-        bool doesWindowStillExist = windows.find(hwnd) != windows.end();
+        if (window == windows.end()) {
+            logError("Can't find window with hwnd: " + std::to_string((long)hwnd));
+            continue;
+        }
 
-        if (!doesWindowStillExist) {
-            itemsToRemove.insert(item);
+        newList.push_front(*window);
+    }
+
+    // If some windows are new, we have no saved indexes for them,
+    // so just add them to the end of the list
+    for (auto window : windows) {
+        auto hwnd = window.hwnd;
+
+        auto found = std::find_if(newList.begin(), newList.end(),
+            [hwnd](const Window& obj) {
+                return obj.hwnd == hwnd;
+            }
+        );
+
+        if (found == newList.end()) {
+            newList.push_back(window);
         }
     }
 
-    for (auto item : itemsToRemove) {
-        logInfo("Screen cleanup, removing " + item.first);
-
-        positionToWindowMap.erase(item.first);
-        windowToPositionMap.erase(item.second);
-    }
-}
-
-void Screen::reset() {
-    windows.clear();
+    // Assign the newly sorted list to the windows list
+    windows = newList;
 }
 
 void Screen::setFocusedWindow(Window window) {
     if (window.hwnd != NULL) {
         focusedWindow = window;
         SetForegroundWindow(focusedWindow.hwnd); // TODO: Maybe move this out of this struct?
-    }
-    else {
-        logError("Can't set focused window as it's null");
     }
 }
 
@@ -83,89 +93,96 @@ void Screen::setActiveLayout(LayoutType layout) {
 }
 
 void Screen::moveFocusLeft(){
-    normalizeScreenState();
-
     if (focusedWindow.hwnd == NULL && !windows.empty()) {
-        setFocusedWindow(
-            getWindowAtPosition(0)
-        );
+        setFocusedWindow(windows.front());
     }
 
-    auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
+    HWND hwnd = focusedWindow.hwnd;
 
-    if (focusedWindowIndex > 0) {
-        setFocusedWindow(
-            getWindowAtPosition(focusedWindowIndex - 1)
-        );
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
+
+    if (window != windows.begin()) {
+        setFocusedWindow(*std::prev(window));
+        logInfo("Focus moved to left");
     } else {
-        logInfo("Can't go further left.");
+        logInfo("Can't move to left, already at the edge");
     }
 }
 
 void Screen::moveFocusRight(){
-    normalizeScreenState();
-
     if (focusedWindow.hwnd == NULL && !windows.empty()) {
-        setFocusedWindow(
-            getWindowAtPosition(0)
-        );
+        setFocusedWindow(windows.front());
     }
 
-    auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
+    HWND hwnd = focusedWindow.hwnd;
 
-    if (focusedWindowIndex < windows.size() - 1) {
-        setFocusedWindow(
-            getWindowAtPosition(focusedWindowIndex + 1)
-        );
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
+
+    if (window != windows.end() && std::next(window) != windows.end()) {
+        setFocusedWindow(*std::next(window));
+        logInfo("Focus moved to right");
     } else {
-        logInfo("Can't go further right.");
+        logInfo("Can't move to right, already at the edge");
     }
-}
-
-Window Screen::getWindowAtPosition(int position) {
-    HWND hwnd = positionToWindowMap[position];
-
-    return windows[hwnd];
 }
 
 void Screen::moveFocusedWindowRight() {
-    normalizeScreenState();
+    HWND hwnd = focusedWindow.hwnd;
 
-    auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
 
-    if (focusedWindowIndex == windows.size() - 1) {
-        logInfo("Can't move to right, already at the edge");
-        return;
+    if (window != windows.end() && std::next(window) != windows.end()) {
+        std::iter_swap(window, std::next(window));
+        logInfo("Window moved to right");
     } else {
-        positionToWindowMap[focusedWindowIndex] = positionToWindowMap[focusedWindowIndex + 1];
-        positionToWindowMap[focusedWindowIndex + 1] = focusedWindow.hwnd;
-
-        windowToPositionMap[focusedWindow.hwnd] = focusedWindowIndex + 1;
-        windowToPositionMap[positionToWindowMap[focusedWindowIndex]] = focusedWindowIndex;
+        logInfo("Can't move to right, already at the edge");
     }
 }
 
 void Screen::moveFocusedWindowLeft() {
-    normalizeScreenState();
+    HWND hwnd = focusedWindow.hwnd;
 
-    auto focusedWindowIndex = windowToPositionMap[focusedWindow.hwnd];
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
 
-    if (focusedWindowIndex < 1) {
-        logInfo("Can't move to left, already at the edge");
-        return;
+    if (window != windows.end() && window != windows.begin()) {
+        std::iter_swap(window, std::prev(window));
+        logInfo("Window moved to left");
     } else {
-        positionToWindowMap[focusedWindowIndex] = positionToWindowMap[focusedWindowIndex - 1];
-        positionToWindowMap[focusedWindowIndex - 1] = focusedWindow.hwnd;
-
-        windowToPositionMap[focusedWindow.hwnd] = focusedWindowIndex - 1;
-        windowToPositionMap[positionToWindowMap[focusedWindowIndex]] = focusedWindowIndex;
-    } 
+        logInfo("Can't move to left, already at the edge");
+    }
 }
 
 void Screen::closeFocusedWindow() {
     LRESULT res = ::SendMessage(focusedWindow.hwnd, WM_CLOSE, NULL, NULL);
-    int position = windowToPositionMap[focusedWindow.hwnd];
 
-    windowToPositionMap.erase(focusedWindow.hwnd);
-    positionToWindowMap.erase(position);
+    HWND hwnd = focusedWindow.hwnd;
+
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
+
+    if (window != windows.end()) {
+        windows.erase(window);
+        logInfo("Window closed");
+    } else {
+        logError("Can't erase window from the list");
+    }
 }

@@ -8,7 +8,6 @@
 #include <winerror.h>
 #include <dwmapi.h>
 #include <vector>
-#include <unordered_map>
 #include <iostream>
 
 const int padding = 50;
@@ -17,10 +16,7 @@ const int taskbarSize = 50;
 void buildStackedLayout(Screen screen) {
     int windowCount = 0;
 
-    for (auto item : screen.positionToWindowMap) {
-        int position = item.first;
-        auto window = screen.windows[item.second];
-
+    for (auto window : screen.windows) {
         int spacing = padding * windowCount;
 
         bool isWindowMovedSuccessfully = window.move(
@@ -42,10 +38,7 @@ void buildSplitLayout(Screen screen) {
 
     int windowCount = 0;
 
-    for (auto item : screen.positionToWindowMap) {
-        int position = item.first;
-        auto window = screen.windows[item.second];
-
+    for (auto window : screen.windows) {
         bool isWindowMovedSuccessfully = window.move(
             windowCount * windowWidth,
             0,
@@ -68,9 +61,7 @@ void buildCenteredLayout(Screen screen) {
 
     int windowCount = 0;
 
-    for (auto item : screen.positionToWindowMap) {
-        int position = item.first;
-        auto window = screen.windows[item.second];
+    for (auto window : screen.windows) {
 
         int xPosition, yPosition, width, height;
 
@@ -105,10 +96,6 @@ void buildCenteredLayout(Screen screen) {
 }
 
 void buildLayout(Screen screen) {
-
-    // Clean up any invalid data before building the UI
-    screen.normalizeScreenState();
-
     switch (screen.layoutType)
     {
     case LAYOUT_TYPE_NONE:
