@@ -9,7 +9,7 @@
 // TODO: This path should be:
 // - created if it doesn't exist
 // - moved to %APPDATA% or something
-static std::string configPath = "config\\i3win.conf";
+static std::string configPath = "..\\..\\config\\i3win.conf";
 
 void Config::loadConfigurationData() {
     std::ifstream inputFile(configPath);

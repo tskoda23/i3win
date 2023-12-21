@@ -194,6 +194,8 @@ int main() {
         return 1;
     }
 
+    logInfo("***    Window manager started ***");
+
     screen.initialize(LAYOUT_TYPE_NONE, g_screenWidth, g_screenHeight);
 
     // Chechk window state each second and update layout
