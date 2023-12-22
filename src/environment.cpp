@@ -16,7 +16,7 @@ std::string getAppStoragePath() {
 
     wchar_t appDataPath[MAX_PATH];
 
-    if (FAILED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appDataPath))) {
+    if (FAILED(SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, appDataPath))) {
         std::cerr << "Failed to get the APPDATA folder path." << std::endl;
         return std::string();
     }

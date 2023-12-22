@@ -1,5 +1,3 @@
 @echo off
 
-build.bat
-
-build\main.exe
+build.bat && "build\i3win.exe"
