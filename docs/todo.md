@@ -1,7 +1,6 @@
 # TODO
 
 ## Functional
-- hide alt-tab window from being shown as active window
 - in split layout, remove extra space between windows
 - command to move window to start/end
 - can't move windows with admin right unless this program is also ran with admin rights
