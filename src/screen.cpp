@@ -7,12 +7,20 @@
 #include "window.h"
 #include "screen.h"
 #include "logger.h"
+#include "state.h"
 
-void Screen::initialize(LayoutType layoutType, int screenWidth, int screenHeight) {
+void Screen::initialize(int screenWidth, int screenHeight) {
     this->layoutType = layoutType;
     this->screenWidth = screenWidth;
     this->screenHeight = screenHeight;
     this->config = Config();
+    this->state = State();
+
+    int layoutType = state.getNumericValue("ACTIVE_LAYOUT");
+
+    this->layoutType = layoutType == 0 
+        ? LayoutType::LAYOUT_TYPE_NONE 
+        : (LayoutType) layoutType;
 }
 
 void Screen::addWindow(Window window) {
@@ -90,6 +98,7 @@ void Screen::setFocusedWindow(Window window) {
 
 void Screen::setActiveLayout(LayoutType layout) {
     layoutType = layout;
+    state.setValue("ACTIVE_LAYOUT", std::to_string(layout));
 }
 
 void Screen::moveFocusLeft(){

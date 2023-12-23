@@ -202,7 +202,8 @@ int main() {
 
     logInfo("***    Window manager started ***");
 
-    screen.initialize(LAYOUT_TYPE_NONE, g_screenWidth, g_screenHeight);
+
+    screen.initialize(g_screenWidth, g_screenHeight);
 
     // Chechk window state each second and update layout
     std::future<void> asyncResult = std::async(std::launch::async, checkWindowState);

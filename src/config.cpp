@@ -5,17 +5,15 @@
 
 #include "config.h"
 #include "logger.h"
+#include "environment.h"
 
-// TODO: This path should be:
-// - created if it doesn't exist
-// - moved to %APPDATA% or something
-static std::string configPath = "..\\..\\config\\i3win.conf";
+static std::string configPath = getAppStoragePath() + "i3win.conf";
 
-void Config::loadConfigurationData() {
+void Config::loadConfigurationData() {  
     std::ifstream inputFile(configPath);
 
     if (!inputFile.is_open()) {
-        logError("Error opening the config file!");
+        logError("Error opening the config file! " + configPath);
         return;
     }
 

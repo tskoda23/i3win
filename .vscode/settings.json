@@ -71,6 +71,7 @@
         "functional": "cpp",
         "future": "cpp",
         "mutex": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "codecvt": "cpp"
     }
 }
