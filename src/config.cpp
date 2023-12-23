@@ -49,8 +49,13 @@ Config::Config() {
     loadConfigurationData();
 }
 
-int Config::getNumericConfigValue(std::string key) {
+int Config::getNumericValue(std::string key) {
     auto value = configValues[key];
+
+    if (value.empty()) {
+        value = defaultConfigValues[key];
+    }
+
     try {
         return std::stoi(value);
     }
@@ -62,7 +67,11 @@ int Config::getNumericConfigValue(std::string key) {
     
 }
 
-std::string Config::getConfigValue(std::string key) {
-    return configValues[key];
+std::string Config::getValue(std::string key) {
+    auto value = configValues[key];
+
+     if (value.empty()) {
+        return defaultConfigValues[key];
+    }
 }
 

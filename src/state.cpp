@@ -72,8 +72,9 @@ int State::getNumericValue(std::string key) {
     auto value = values[key];
 
     if (value.empty()) {
-        return 0;
+        value = defaultStateValues[key];
     }
+
     try {
         return std::stoi(value);
     }
@@ -85,5 +86,9 @@ int State::getNumericValue(std::string key) {
 }
 
 std::string State::getValue(std::string key) {
-    return values[key];
+    auto value = values[key];
+
+     if (value.empty()) {
+        return defaultStateValues[key];
+    }
 }

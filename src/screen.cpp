@@ -16,11 +16,7 @@ void Screen::initialize(int screenWidth, int screenHeight) {
     this->config = Config();
     this->state = State();
 
-    int layoutType = state.getNumericValue("ACTIVE_LAYOUT");
-
-    this->layoutType = layoutType == 0 
-        ? LayoutType::LAYOUT_TYPE_NONE 
-        : (LayoutType) layoutType;
+    this->layoutType = (LayoutType) state.getNumericValue(ACTIVE_LAYOUT);
 }
 
 void Screen::addWindow(Window window) {
@@ -98,7 +94,7 @@ void Screen::setFocusedWindow(Window window) {
 
 void Screen::setActiveLayout(LayoutType layout) {
     layoutType = layout;
-    state.setValue("ACTIVE_LAYOUT", std::to_string(layout));
+    state.setValue(ACTIVE_LAYOUT, std::to_string(layout));
 }
 
 void Screen::moveFocusLeft(){
@@ -194,4 +190,36 @@ void Screen::closeFocusedWindow() {
     } else {
         logError("Can't erase window from the list");
     }
+}
+
+void Screen::changeMainWindowSize(int screenPercentageChange) {
+    int existingChange = state.getNumericValue(MAIN_WINDOW_PERCENTAGE_CHANGE);
+    int newChange = existingChange + screenPercentageChange;
+
+    state.setValue(MAIN_WINDOW_PERCENTAGE_CHANGE, std::to_string(newChange));
+}
+
+void Screen::setAsMainWindow() {
+
+    bool isAlreadyMainWindow = focusedWindow.hwnd == windows.front().hwnd;
+    bool hasLastWindowSwappedWithMainWindow = lastWindowSwappedWithMainWindow != NULL;
+
+    HWND hwnd = isAlreadyMainWindow && hasLastWindowSwappedWithMainWindow
+        ? lastWindowSwappedWithMainWindow
+        : focusedWindow.hwnd;
+
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
+
+    if (window != windows.end()) {
+        lastWindowSwappedWithMainWindow = windows.front().hwnd;
+        std::iter_swap(window, windows.begin());
+        logInfo("Window moved to main");
+    } else {
+        logInfo("Can't set window as main");
+    }
+
 }
