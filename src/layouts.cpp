@@ -10,7 +10,6 @@
 #include <vector>
 #include <iostream>
 
-const int padding = 50;
 const int taskbarSize = 50;
 
 int getMainWindowWidthPercentage(Screen screen) {
@@ -31,19 +30,21 @@ int getMainWindowWidthPercentage(Screen screen) {
 }
 
 void buildStackedLayout(Screen screen) {
-    int windowCount = 0;
+    int windowsRendered = 0;
+    int margin = 50;
 
     for (auto window : screen.windows) {
-        int spacing = padding * windowCount;
+        int startMargin = margin * windowsRendered;
+        int endMargin = margin * (screen.windows.size() - windowsRendered - 1);
 
         bool isWindowMovedSuccessfully = window.move(
+            startMargin,
             0,
-            spacing,
-            screen.screenWidth,
-            screen.screenHeight - spacing);
+            screen.screenWidth - startMargin - endMargin,
+            screen.screenHeight - taskbarSize);
 
         if (isWindowMovedSuccessfully) {
-            windowCount++;
+            windowsRendered++;
         }
     }
 }
