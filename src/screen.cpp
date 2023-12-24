@@ -217,6 +217,7 @@ void Screen::setAsMainWindow() {
     if (window != windows.end()) {
         lastWindowSwappedWithMainWindow = windows.front().hwnd;
         std::iter_swap(window, windows.begin());
+        setFocusedWindow(windows.front());
         logInfo("Window moved to main");
     } else {
         logInfo("Can't set window as main");
