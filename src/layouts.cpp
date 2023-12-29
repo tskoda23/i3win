@@ -76,6 +76,7 @@ void buildSplitLayout(Screen screen) {
             windowCount++;
         }
     }
+    
 }
 
 void buildCenteredLayout(Screen screen) {
@@ -129,21 +130,29 @@ void buildCenteredLayout(Screen screen) {
 }
 
 void buildLayout(Screen screen) {
-    switch (screen.layoutType)
-    {
-    case LAYOUT_TYPE_NONE:
-        break;
-    case LAYOUT_TYPE_STACKED:
-        buildStackedLayout(screen);
-        break;
-    case LAYOUT_TYPE_SPLIT:
-        buildSplitLayout(screen);
-        break;
-    case LAYOUT_TYPE_CENTERED:
-        buildCenteredLayout(screen);
-        break;
-    default:
-        logError("Unknown layout type, doing nothing.");
-        break;
+    if(screen.windows.size() > 1){
+        switch (screen.layoutType)
+        {
+        case LAYOUT_TYPE_NONE:
+            break;
+        case LAYOUT_TYPE_STACKED:
+            buildStackedLayout(screen);
+            break;
+        case LAYOUT_TYPE_SPLIT:
+            buildSplitLayout(screen);
+            break;
+        case LAYOUT_TYPE_CENTERED:
+            buildCenteredLayout(screen);
+            break;
+        default:
+            logError("Unknown layout type, doing nothing.");
+            break;
+        }
+    }else if(screen.windows.size() == 1){
+        screen.windows.front().move(
+            0,
+            0,
+            screen.screenWidth,
+            screen.screenHeight - taskbarSize);
     }
 }

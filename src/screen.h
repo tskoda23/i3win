@@ -29,6 +29,7 @@ struct Screen {
 
     void initialize(int screenWidth, int screenHeight);
     void addWindow(Window window);  
+    void removeWindow(HWND hwnd);  
     void onBeforeWindowsRegistered();
     void setFocusedWindow(Window window);
     void onAfterWindowsRegistered();

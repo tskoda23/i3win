@@ -23,6 +23,16 @@ void Screen::addWindow(Window window) {
     windows.push_front(window);
 }
 
+void Screen::removeWindow(HWND hwnd) {
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
+
+    windows.erase(window);
+}
+
 void Screen::onBeforeWindowsRegistered() {
     // Remember indexes of windows to restore their position later
     windowIndexes.clear();
@@ -234,7 +244,7 @@ void Screen::hideWindows(){
 
 void Screen::showWindows(){
     isHidden = false;
-     for (Window window : windows) {
+    for (Window window : windows) {
         window.show();
-     }   
+    }   
 }
