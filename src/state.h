@@ -4,6 +4,14 @@
 #ifndef STATE_H
 #define STATE_H
 
+static std::string MAIN_WINDOW_PERCENTAGE_CHANGE = "MAIN_WINDOW_PERCENTAGE_CHANGE";
+static std::string ACTIVE_LAYOUT = "ACTIVE_LAYOUT";
+
+static std::unordered_map<std::string, std::string> defaultStateValues = {
+    {MAIN_WINDOW_PERCENTAGE_CHANGE, "0"},
+    {ACTIVE_LAYOUT, "0"}
+};
+
 class State {
     public: 
         State();

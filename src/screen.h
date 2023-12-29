@@ -10,7 +10,7 @@
 
 // TODO: This was part of layouts.h, but had to move it here to avoid circular reference
 enum LayoutType {
-    LAYOUT_TYPE_NONE = 1,
+    LAYOUT_TYPE_NONE = 0,
     LAYOUT_TYPE_STACKED,
     LAYOUT_TYPE_SPLIT,
     LAYOUT_TYPE_CENTERED,
@@ -25,6 +25,7 @@ struct Screen {
     Window focusedWindow;
     int screenWidth;
     int screenHeight;
+    HWND lastWindowSwappedWithMainWindow;
 
     void initialize(int screenWidth, int screenHeight);
     void addWindow(Window window);  
@@ -38,6 +39,9 @@ struct Screen {
 
     void moveFocusedWindowLeft();
     void moveFocusedWindowRight();
+
+    void changeMainWindowSize(int screenPercentageChange);
+    void setAsMainWindow();
 
     Window getWindow(HWND hwnd);
 
