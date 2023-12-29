@@ -46,6 +46,9 @@ struct Screen {
     Window getWindow(HWND hwnd);
 
     void closeFocusedWindow();
+    bool isHidden = false;
+    void hideWindows();
+    void showWindows();
 };
 
 #endif

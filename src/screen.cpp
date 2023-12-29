@@ -224,3 +224,17 @@ void Screen::setAsMainWindow() {
     }
 
 }
+
+void Screen::hideWindows(){
+    isHidden = true;
+     for (Window window : windows) {
+        window.hide();
+     }   
+}
+
+void Screen::showWindows(){
+    isHidden = false;
+     for (Window window : windows) {
+        window.show();
+     }   
+}

@@ -21,7 +21,19 @@ bool showRealTimeState = false;
 int g_screenWidth = GetSystemMetrics(SM_CXSCREEN);
 int g_screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-Screen screen;
+int ac = 0;
+Screen screen0;
+Screen screen1;
+Screen screen2;
+Screen screen3;
+Screen screen4;
+Screen screen5;
+Screen screen6;
+Screen screen7;
+Screen screen8;
+Screen screen9;
+
+Screen screens[10] = {screen0, screen1, screen2, screen3, screen4, screen5, screen6, screen7, screen8, screen9};
 
 std::mutex windowStateMutex;
 
@@ -43,7 +55,7 @@ void registerNewWindow(Window window) {
     if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !IsWindowsClassName(window.className))
     {
         if (!window.isHidden()) {
-            screen.addWindow(window);
+            screens[ac].addWindow(window);
         }
     }
 }
@@ -63,8 +75,8 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     Window newFwin = getWindowFromHWND(fWinH);
     newFwin.isInitialized = 1;
 
-    if(screen.focusedWindow.isInitialized == 0 || screen.focusedWindow.hwnd != newFwin.hwnd){
-        screen.setFocusedWindow(newFwin);
+    if(screens[ac].focusedWindow.isInitialized == 0 || screens[ac].focusedWindow.hwnd != newFwin.hwnd){
+        screens[ac].setFocusedWindow(newFwin);
     }
 
     // Exit early if window is popup or something not a real window
@@ -92,55 +104,89 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             std::lock_guard<std::mutex> lock(windowStateMutex);
 
             if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == 'Q'))) {
-                screen.closeFocusedWindow();
-                buildLayout(screen);
+                screens[ac].closeFocusedWindow();
+                buildLayout(screens[ac]);
                 return CATCH_KEYBOARD_EVENT;
             }else if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == VK_LEFT))) {
-                screen.moveFocusedWindowLeft();
-                buildLayout(screen);
+                screens[ac].moveFocusedWindowLeft();
+                buildLayout(screens[ac]);
                 return CATCH_KEYBOARD_EVENT;
             }else if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000) && (pKeyInfo->vkCode == VK_RIGHT))) {
-                screen.moveFocusedWindowRight();
-                buildLayout(screen);
+                screens[ac].moveFocusedWindowRight();
+                buildLayout(screens[ac]);
                 return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '1')) {
-                message = "Alt + 1 pressed! buildSplitLayout!\n";
+                message = "Alt + 1 pressed! Switch to workspace 1!\n";
+                screens[ac].hideWindows();
+                ac = 0;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
-                message = "Alt + 2 pressed! buildStackLayout!\n";
+                message = "Alt + 2 pressed! Switch to workspace 2!\n";
+                screens[ac].hideWindows();
+                ac = 1;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '3')) {
-                message = "Alt + 3 pressed! Moving focused window left\n";
+                message = "Alt + 3 pressed! Switch to workspace 3\n";
+                screens[ac].hideWindows();
+                ac = 2;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '4')) {
-                message = "Alt + 4 pressed! Moving focused window right\n";
+                message = "Alt + 4 pressed! Switch to workspace 4\n";
+                screens[ac].hideWindows();
+                ac = 3;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '5')) {
                 message = "Alt + 5 pressed! Switch to workspace 5\n";
+                screens[ac].hideWindows();
+                ac = 4;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '6')) {
                 message = "Alt + 6 pressed! Switch to workspace 6\n";
+                screens[ac].hideWindows();
+                ac = 5;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '7')) {
                 message = "Alt + 7 pressed! Switch to workspace 7\n";
+                screens[ac].hideWindows();
+                ac = 6;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '8')) {
                 message = "Alt + 8 pressed! Switch to workspace 8\n";
+                screens[ac].hideWindows();
+                ac = 7;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '9')) {
                 message = "Alt + 9 pressed! Switch to workspace 9\n";
+                screens[ac].hideWindows();
+                ac = 8;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '0')) {
                 message = "Alt + 0 pressed! Switch to workspace 0\n";
+                screens[ac].hideWindows();
+                ac = 9;
+                screens[ac].showWindows();
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'A')) {
-                message = "Alt + 0 pressed! Switch to workspace 0\n";
-                screen.setActiveLayout(LAYOUT_TYPE_STACKED);
-                buildLayout(screen);
+                message = "Alt + A pressed! Build stacked layout\n";
+                screens[ac].setActiveLayout(LAYOUT_TYPE_STACKED);
+                buildLayout(screens[ac]);
                 return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'B')) {
-                screen.setActiveLayout(LAYOUT_TYPE_SPLIT);
-                buildLayout(screen);
+                message = "Alt + B pressed! Build split layout\n";
+                screens[ac].setActiveLayout(LAYOUT_TYPE_SPLIT);
+                buildLayout(screens[ac]);
                 return CATCH_KEYBOARD_EVENT;
             } else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == 'C')) {
-                screen.setActiveLayout(LAYOUT_TYPE_CENTERED);
-                buildLayout(screen);
+                message = "Alt + C pressed! Build centered layout\n";
+                screens[ac].setActiveLayout(LAYOUT_TYPE_CENTERED);
+                buildLayout(screens[ac]);
                 return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_LEFT)) {
-                screen.moveFocusLeft();
+                message = "Alt + LEFT pressed! Move focus left\n";
+                screens[ac].moveFocusLeft();
                 return CATCH_KEYBOARD_EVENT;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == VK_RIGHT)) {
-                screen.moveFocusRight();
+                message = "Alt + RIGHT pressed! Move focus right\n";
+                screens[ac].moveFocusRight();
                 return CATCH_KEYBOARD_EVENT;
             }
 
@@ -174,16 +220,16 @@ void checkWindowState() {
     while (true) {
         std::unique_lock<std::mutex> lock(windowStateMutex);
 
-        screen.onBeforeWindowsRegistered();
+        screens[ac].onBeforeWindowsRegistered();
 
         EnumWindows(handleWindow, NULL);
 
-        screen.onAfterWindowsRegistered();
+        screens[ac].onAfterWindowsRegistered();
         
-        buildLayout(screen);
+        buildLayout(screens[ac]);
 
         if (showRealTimeState) {
-            printWindowState(screen);    
+            printWindowState(screens[ac]);    
         }
 
         lock.unlock();
@@ -202,7 +248,7 @@ int main() {
 
     logInfo("***    Window manager started ***");
 
-    screen.initialize(g_screenWidth, g_screenHeight);
+    screens[ac].initialize(g_screenWidth, g_screenHeight);
 
     // Chechk window state each second and update layout
     std::future<void> asyncResult = std::async(std::launch::async, checkWindowState);

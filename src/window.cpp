@@ -77,3 +77,11 @@ Window getWindowFromHWND(HWND hwnd) {
             rect.bottom
     };
 }
+
+void Window::hide(){
+    ShowWindow(hwnd, SW_MINIMIZE);
+}
+
+void Window::show(){
+    ShowWindow(hwnd, SW_RESTORE);
+}
