@@ -4,19 +4,21 @@
 #include <list>
 #include <algorithm>
 #include <iterator>
+
 #include "window.h"
 #include "screen.h"
 #include "logger.h"
 #include "state.h"
 
-void Screen::initialize(int screenWidth, int screenHeight) {
+void Screen::initialize() {
     this->layoutType = layoutType;
-    this->screenWidth = screenWidth;
-    this->screenHeight = screenHeight;
+    this->screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    this->screenHeight = GetSystemMetrics(SM_CYSCREEN);
     this->config = Config();
     this->state = State();
 
     this->layoutType = (LayoutType) state.getNumericValue(ACTIVE_LAYOUT);
+    this->isInit = true;
 }
 
 void Screen::addWindow(Window window) {

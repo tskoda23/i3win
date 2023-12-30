@@ -1,13 +1,14 @@
 #include <unordered_map>
 #include <string>
+using namespace std;
 
 #ifndef STATE_H
 #define STATE_H
 
-static std::string MAIN_WINDOW_PERCENTAGE_CHANGE = "MAIN_WINDOW_PERCENTAGE_CHANGE";
-static std::string ACTIVE_LAYOUT = "ACTIVE_LAYOUT";
+static string MAIN_WINDOW_PERCENTAGE_CHANGE = "MAIN_WINDOW_PERCENTAGE_CHANGE";
+static string ACTIVE_LAYOUT = "ACTIVE_LAYOUT";
 
-static std::unordered_map<std::string, std::string> defaultStateValues = {
+static unordered_map<string, string> defaultStateValues = {
     {MAIN_WINDOW_PERCENTAGE_CHANGE, "0"},
     {ACTIVE_LAYOUT, "0"}
 };
@@ -16,11 +17,11 @@ class State {
     public: 
         State();
         void reload();
-        void setValue(std::string key, std::string value);
-        int getNumericValue(std::string key);
-        std::string getValue(std::string key);
+        void setValue(string key, string value);
+        int getNumericValue(string key);
+        string getValue(string key);
     private:
-        std::unordered_map<std::string, std::string> values;
+        unordered_map<string, string> values;
         void loadStateData();
 };
 
