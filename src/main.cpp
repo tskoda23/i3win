@@ -253,6 +253,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 ac = 0;
                 screens[ac].showWindows();
                 // screens[ac].initialize(g_screenWidth, g_screenHeight);
+                // NO NEED TO INITIALIZE IT'S ALREADY INIT
                 buildLayout(screens[ac]);
                 hotkeyPressed = true;
             }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (pKeyInfo->vkCode == '2')) {
