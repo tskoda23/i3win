@@ -7,7 +7,7 @@
 -   can't move windows with admin right unless this program is also ran with admin rights
 -   add keyboard shortcut to minimize window
 -   change stacked layout to align windows horizontally
--   move window to workspace
+-   focus when switching workspaces
 
 ## UI Stuff
 
