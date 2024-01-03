@@ -224,3 +224,8 @@ void Screen::setAsMainWindow() {
     }
 
 }
+
+void Screen::reloadConfig() {
+    config.reload();
+    logInfo("Config reloaded.");
+}

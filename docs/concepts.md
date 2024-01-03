@@ -10,7 +10,7 @@ Main window is the leftmost one in the split/stacked layouts, and center one in 
 
 ## Layouts
 
-Layouts is an arrangement of windows on a certain screen. There are few layouts currently supported:
+Layout is an arrangement of windows on a certain screen. There are few layouts currently supported:
 - `LAYOUT_TYPE_SPLIT` - stack windows side by side, split vertically
 - `LAYOUT_TYPE_CENTERED` - main window in center, all the others tile around it
-- `LAYOUT_TYPE_STACKED` - stacks windows on top of each other
+- `LAYOUT_TYPE_STACKED` - stacks windows on top of each other, with some margin at their ends as an indicator of other windows

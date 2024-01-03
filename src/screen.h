@@ -43,6 +43,8 @@ struct Screen {
     void changeMainWindowSize(int screenPercentageChange);
     void setAsMainWindow();
 
+    void reloadConfig();
+
     Window getWindow(HWND hwnd);
 
     void closeFocusedWindow();
