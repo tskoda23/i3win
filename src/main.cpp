@@ -26,9 +26,13 @@ Screen screen;
 std::mutex windowStateMutex;
 
 // Filter out internal windows OS stuff that's always shown
-BOOL IsWindowsClassName(std::string className) {
-    return className == "Progman" ||
-    className == "MultitaskingViewFrame";
+BOOL IsWindowsClassName(Window window) {
+    bool isAltTab = window.className == "XamlExplorerHostIslandWindow" && window.title == "Task Switching";
+
+return window.className == "Progman" 
+        || window.className == "MultitaskingViewFrame"
+        || window.className == "TopLevelWindowForOverflowXamlIsland" // System tray overflow window
+        || isAltTab;
 }
 
 BOOL IsWindowCloaked(HWND hwnd)
@@ -40,7 +44,7 @@ BOOL IsWindowCloaked(HWND hwnd)
 void registerNewWindow(Window window) {
     // pass WM_DISPLAYCHANGE if resolution changed
     // check if it has title
-    if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !IsWindowsClassName(window.className))
+    if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !IsWindowsClassName(window))
     {
         if (!window.isHidden()) {
             screen.addWindow(window);

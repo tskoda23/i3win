@@ -18,4 +18,4 @@
 - avoid redrawing layout if no new windows appear
 
 ## Bugs
-- if caps lock is used as modifier key, we should disable its default behaviour completely
+    - if caps lock is used as modifier key, we should disable its default behaviour completely
