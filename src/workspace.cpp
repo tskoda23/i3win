@@ -9,17 +9,19 @@ void Workspace::init(){
         }
 
         activeWsp = 0;
-        activeScreen = screens[0];
-        activeScreen.initialize();
+        activeScreen = &screens[0];
+        activeScreen->initialize();
         isInit = true;
     }
 }
 
 void Workspace::setActiveWsp(int wsp){
     activeWsp = wsp;
-    activeScreen = screens[wsp];
+    activeScreen = &screens[wsp];
 
-    if(!activeScreen.isInit){
-        activeScreen.initialize();
+    if(!activeScreen->isInit){
+        activeScreen->initialize();
     }
+
+    printf("Switch active screen to %d", wsp);
 }

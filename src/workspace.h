@@ -6,7 +6,7 @@
 struct Workspace{
     int activeWsp;
     Screen screens[10]; 
-    Screen activeScreen; 
+    Screen *activeScreen; 
     bool isInit = false;
 
     void init();

@@ -22,7 +22,7 @@ using namespace std;
 HHOOK g_keyboardHook;
 
 bool debug = true; 
-bool showRealTimeState = true; 
+bool showRealTimeState = false;
 
 Workspace workspace;
 
@@ -48,7 +48,7 @@ void registerNewWindow(Window window) {
     if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !IsWindowsClassName(window.className))
     {
         if (!window.isHidden()) {
-            workspace.activeScreen.addWindow(window);
+            workspace.activeScreen->addWindow(window);
         }
     }
 }
@@ -68,9 +68,9 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     Window newFwin = getWindowFromHWND(fWinH);
     newFwin.isInitialized = 1;
 
-    if(workspace.activeScreen.focusedWindow.isInitialized == 0 
-    || workspace.activeScreen.focusedWindow.hwnd != newFwin.hwnd){
-        workspace.activeScreen.setFocusedWindow(newFwin);
+    if(workspace.activeScreen->focusedWindow.isInitialized == 0 
+    || workspace.activeScreen->focusedWindow.hwnd != newFwin.hwnd){
+        workspace.activeScreen->setFocusedWindow(newFwin);
     }
 
     // Exit early if window is popup or something not a real window
@@ -105,15 +105,15 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
 }
 
-void printWindowState(Screen screen) {
+void printWindowState(Screen *screen) {
     system("cls");
-    cout << "Currently active windows: " << screen.windows.size() << endl;
+    cout << "Currently active windows: " << screen->windows.size() << endl;
         
     int position = 0;
-    for (auto window : screen.windows) {
+    for (auto window : screen->windows) {
         cout << position++ << " - " << window.title;
 
-        if (window.hwnd == screen.focusedWindow.hwnd) {
+        if (window.hwnd == screen->focusedWindow.hwnd) {
             cout << " - FOCUSED";
         }
 
@@ -125,11 +125,11 @@ void checkWindowState() {
     while (true) {
         unique_lock<mutex> lock(windowStateMutex);
 
-        workspace.activeScreen.onBeforeWindowsRegistered();
+        workspace.activeScreen->onBeforeWindowsRegistered();
 
         EnumWindows(handleWindow, NULL);
 
-        workspace.activeScreen.onAfterWindowsRegistered();
+        workspace.activeScreen->onAfterWindowsRegistered();
         
         buildLayout(workspace.activeScreen);
 

@@ -1,5 +1,5 @@
 #include<windows.h>
-
+#include<iostream>
 #include "hotkey.h"
 #include "screen.h"
 #include "state.h"
@@ -9,20 +9,20 @@
 using namespace std;
 
 void Hotkey::switchToWorkspace(int wsp, Workspace workspace){
-    workspace.activeScreen.hideWindows();
+    workspace.activeScreen->hideWindows();
 
     workspace.setActiveWsp(wsp);
 
-    workspace.activeScreen.showWindows();
+    workspace.activeScreen->showWindows();
 
     buildLayout(workspace.activeScreen);
 }
 
 void Hotkey::moveWindowToWorkspace(int wsp, Workspace workspace){
     if(workspace.activeWsp != wsp){
-        Window win = workspace.activeScreen.focusedWindow;
+        Window win = workspace.activeScreen->focusedWindow;
         win.hide();
-        workspace.activeScreen.removeWindow(win.hwnd);
+        workspace.activeScreen->removeWindow(win.hwnd);
         Window newWin = getWindowFromHWND(win.hwnd);
         workspace.screens[wsp].addWindow(newWin);
         buildLayout(workspace.activeScreen);
@@ -32,18 +32,22 @@ void Hotkey::moveWindowToWorkspace(int wsp, Workspace workspace){
 bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
     string message;
     bool hotkeyPressed = false;
+    int keycodenum = keycode - '0';
 
-    if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000))) {// Mod + Shift + Key
+    if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000)) {// Mod + Shift + Key
+        
+        printf("Switch to workspace %c", keycode);
+
         switch(keycode){
             case 'Q':
-                workspace.activeScreen.closeFocusedWindow();
+                workspace.activeScreen->closeFocusedWindow();
                 break;
             case VK_LEFT:
-                workspace.activeScreen.moveFocusedWindowLeft();
+                workspace.activeScreen->moveFocusedWindowLeft();
                 buildLayout(workspace.activeScreen);
                 break;
             case VK_RIGHT:
-                workspace.activeScreen.moveFocusedWindowRight();
+                workspace.activeScreen->moveFocusedWindowRight();
                 buildLayout(workspace.activeScreen);
                 break;
             case '0':
@@ -56,7 +60,7 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
             case '7':
             case '8':
             case '9':
-                moveWindowToWorkspace((int)keycode, workspace);
+                moveWindowToWorkspace(keycodenum - 1, workspace);
                 break;
             default:
                 break;
@@ -66,23 +70,23 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
     }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000)) { // Mod + key
         switch(keycode){
             case 'A':
-                workspace.activeScreen.setActiveLayout(LAYOUT_TYPE_STACKED);
+                workspace.activeScreen->setActiveLayout(LAYOUT_TYPE_STACKED);
                 buildLayout(workspace.activeScreen);
                 break;
             case 'B':
-                workspace.activeScreen.setActiveLayout(LAYOUT_TYPE_SPLIT);
+                workspace.activeScreen->setActiveLayout(LAYOUT_TYPE_SPLIT);
                 buildLayout(workspace.activeScreen);
                 break;
             case 'C':
-                workspace.activeScreen.setActiveLayout(LAYOUT_TYPE_CENTERED);
+                workspace.activeScreen->setActiveLayout(LAYOUT_TYPE_CENTERED);
                 buildLayout(workspace.activeScreen);
                 break;
             case VK_LEFT:
-                workspace.activeScreen.moveFocusLeft();
+                workspace.activeScreen->moveFocusLeft();
                 break;
             case VK_RIGHT:
-                workspace.activeScreen.moveFocusLeft();
-                workspace.activeScreen.moveFocusRight();
+                workspace.activeScreen->moveFocusLeft();
+                workspace.activeScreen->moveFocusRight();
                 break;
             case '0':
             case '1':
@@ -94,7 +98,7 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
             case '7':
             case '8':
             case '9':
-                switchToWorkspace((int)keycode, workspace);
+                switchToWorkspace(keycodenum - 1, workspace);
                 break;
             default:
                 break;
@@ -109,7 +113,9 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
         }
     }
 
-    printf("Key Pressed: 0x%X\n", keycode);
+    //printf("Key Pressed: 0x%X\n", keycode);
+    printf("Key Pressed: %c\n", keycode);
+
 
     return hotkeyPressed;
 }

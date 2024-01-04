@@ -79,7 +79,9 @@ Window getWindowFromHWND(HWND hwnd) {
 }
 
 void Window::hide(){
-    ShowWindow(hwnd, SW_HIDE);
+    ShowWindow(hwnd, SW_MINIMIZE);
+    //ShowWindow(hwnd, SW_HIDE);
+
 }
 
 void Window::show(){
