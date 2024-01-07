@@ -9,35 +9,36 @@
 using namespace std;
 
 void Hotkey::switchToWorkspace(int wsp, Workspace workspace){
-    workspace.activeScreen->hideWindows();
-
-    workspace.setActiveWsp(wsp);
-
-    workspace.activeScreen->showWindows();
-
-    buildLayout(workspace.activeScreen);
+    if(workspace.activeWsp != wsp){
+        printf("Switch to workspace %d\n", wsp);
+        workspace.activeScreen->hideWindows();
+        workspace.setActiveWsp(wsp);
+        workspace.activeScreen->showWindows();
+        buildLayout(workspace.activeScreen);
+    }else{
+        printf("Already on the same workspace %d\n", wsp);
+    }
 }
 
 void Hotkey::moveWindowToWorkspace(int wsp, Workspace workspace){
     if(workspace.activeWsp != wsp){
+        printf("Move window to workspace %d\n", wsp);
         Window win = workspace.activeScreen->focusedWindow;
         win.hide();
         workspace.activeScreen->removeWindow(win.hwnd);
-        Window newWin = getWindowFromHWND(win.hwnd);
-        workspace.screens[wsp].addWindow(newWin);
+        workspace.screens[wsp].addWindow(win);
         buildLayout(workspace.activeScreen);
+    }else{
+        printf("Already on the same workspace %d\n", wsp);
     }
 }
 
 bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
-    string message;
     bool hotkeyPressed = false;
     int keycodenum = keycode - '0';
 
-    if ((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000)) {// Mod + Shift + Key
-        
-        printf("Switch to workspace %c", keycode);
-
+    if (((GetAsyncKeyState(VK_RMENU) & 0x8000) && (GetAsyncKeyState(VK_SHIFT) & 0x8000))) {
+        hotkeyPressed = true;
         switch(keycode){
             case 'Q':
                 workspace.activeScreen->closeFocusedWindow();
@@ -51,6 +52,8 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
                 buildLayout(workspace.activeScreen);
                 break;
             case '0':
+                moveWindowToWorkspace(9, workspace);
+                break;
             case '1':
             case '2':
             case '3':
@@ -63,11 +66,11 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
                 moveWindowToWorkspace(keycodenum - 1, workspace);
                 break;
             default:
+                hotkeyPressed = false;
                 break;
         }
-        message = "Alt + Shift + " + keycode;
+    } else if (((GetAsyncKeyState(VK_RMENU) & 0x8000))) {
         hotkeyPressed = true;
-    }else if ((GetAsyncKeyState(VK_RMENU) & 0x8000)) { // Mod + key
         switch(keycode){
             case 'A':
                 workspace.activeScreen->setActiveLayout(LAYOUT_TYPE_STACKED);
@@ -85,10 +88,11 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
                 workspace.activeScreen->moveFocusLeft();
                 break;
             case VK_RIGHT:
-                workspace.activeScreen->moveFocusLeft();
                 workspace.activeScreen->moveFocusRight();
                 break;
             case '0':
+                switchToWorkspace(9, workspace);
+                break;
             case '1':
             case '2':
             case '3':
@@ -101,21 +105,14 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
                 switchToWorkspace(keycodenum - 1, workspace);
                 break;
             default:
+                hotkeyPressed = false;
                 break;
         }
-        message = "Alt + " + keycode;
-        hotkeyPressed = true;
     }
 
     if(hotkeyPressed){
-        if(message != ""){
-            cout << message << endl;
-        }
+        printf("HOTKEY preseed\n");
     }
-
-    //printf("Key Pressed: 0x%X\n", keycode);
-    printf("Key Pressed: %c\n", keycode);
-
 
     return hotkeyPressed;
 }

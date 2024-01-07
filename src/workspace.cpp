@@ -2,26 +2,21 @@
 #include "screen.h"
 
 void Workspace::init(){
-    if(!isInit){
+    if(!this->isInit){
+
         for(int i = 0; i < 10; i++){
             Screen newScreen;
+            newScreen.initialize();
             screens[i] = newScreen;
         }
 
         activeWsp = 0;
         activeScreen = &screens[0];
-        activeScreen->initialize();
         isInit = true;
     }
 }
 
 void Workspace::setActiveWsp(int wsp){
-    activeWsp = wsp;
-    activeScreen = &screens[wsp];
-
-    if(!activeScreen->isInit){
-        activeScreen->initialize();
-    }
-
-    printf("Switch active screen to %d", wsp);
+    this->activeWsp = wsp;
+    this->activeScreen = &screens[wsp];
 }

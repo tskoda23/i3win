@@ -92,11 +92,16 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         KBDLLHOOKSTRUCT* pKeyInfo = (KBDLLHOOKSTRUCT*)lParam;
 
         if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
-            // Lock guard's destructor will unlock the mutex automatically at the end of block
-            lock_guard<mutex> lock(windowStateMutex);
-            char keycode = pKeyInfo->vkCode;
+            bool hotkeyPressed = false;
 
-            if(hotkey.handleKeyPress(keycode, workspace)){
+            // Lock guard's destructor will unlock the mutex automatically at the end of block
+
+            lock_guard<mutex> lock(windowStateMutex);
+            DWORD keycode = pKeyInfo->vkCode;
+
+            hotkeyPressed = hotkey.handleKeyPress(keycode, workspace);
+            
+            if(hotkeyPressed){
                 return CATCH_KEYBOARD_EVENT;
             }
         }
