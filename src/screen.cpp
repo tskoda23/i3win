@@ -11,14 +11,13 @@
 #include "state.h"
 
 void Screen::initialize() {
-    this->layoutType = layoutType;
-    this->screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    this->screenHeight = GetSystemMetrics(SM_CYSCREEN);
-    this->config = Config();
-    this->state = State();
+    layoutType = layoutType;
+    screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    config = Config();
+    state = State();
 
-    this->layoutType = (LayoutType) state.getNumericValue(ACTIVE_LAYOUT);
-    this->isInit = true;
+    layoutType = (LayoutType) state.getNumericValue(ACTIVE_LAYOUT);
 }
 
 void Screen::addWindow(Window window) {

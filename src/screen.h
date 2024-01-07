@@ -51,7 +51,6 @@ struct Screen {
     bool isHidden = false;
     void hideWindows();
     void showWindows();
-    bool isInit = false;
 };
 
 #endif

@@ -4,10 +4,9 @@
 #define WORKSPACE_H 
 
 struct Workspace{
-    int activeWsp;
     Screen screens[10]; 
+    int activeWsp;
     Screen *activeScreen; 
-    bool isInit = false;
 
     void init();
     void setActiveWsp(int wsp);

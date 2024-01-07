@@ -9,17 +9,11 @@
 using namespace std;
 
 void Hotkey::switchToWorkspace(int wsp, Workspace *workspace){
-    printf("Trying to switch to workspace %d from %d\n", wsp, workspace->activeWsp);
-
     if(workspace->activeWsp != wsp){
-        printf("switch to workspace %d from %d\n", wsp, workspace->activeWsp);
         workspace->activeScreen->hideWindows();
         workspace->setActiveWsp(wsp);
-        printf("Active workspace is now %d\n", workspace->activeWsp);
         workspace->activeScreen->showWindows();
         buildLayout(workspace->activeScreen);
-    }else{
-        printf("Already on the same workspace %d\n", wsp);
     }
 }
 
@@ -31,8 +25,6 @@ void Hotkey::moveWindowToWorkspace(int wsp, Workspace *workspace){
         workspace->activeScreen->removeWindow(win.hwnd);
         workspace->screens[wsp].addWindow(win);
         buildLayout(workspace->activeScreen);
-    }else{
-        printf("Already on the same workspace %d\n", wsp);
     }
 }
 
@@ -111,10 +103,6 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace *workspace){
                 hotkeyPressed = false;
                 break;
         }
-    }
-
-    if(hotkeyPressed){
-        printf("HOTKEY preseed\n");
     }
 
     return hotkeyPressed;

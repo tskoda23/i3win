@@ -25,7 +25,6 @@ bool debug = true;
 bool showRealTimeState = false;
 
 Workspace workspace;
-
 Hotkey hotkey;
 
 mutex windowStateMutex;
@@ -159,7 +158,6 @@ int main() {
     workspace.init();
 
     logInfo("***    Window manager started ***");
-
 
     // Chechk window state each second and update layout
     future<void> asyncResult = async(launch::async, checkWindowState);
