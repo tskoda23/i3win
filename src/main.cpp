@@ -12,6 +12,7 @@
 #include "window.h"
 #include "screen.h"
 #include "logger.h"
+#include "resource.h"
 
 using namespace std;
 
@@ -170,6 +171,94 @@ void printWindowState(Screen screen) {
     }
 }
 
+NOTIFYICONDATA nidApp;
+HMENU hContextMenu;
+
+#define IDM_MENU_ITEM1  1001
+#define IDM_MENU_ITEM2  1002
+#define ID_TRAY_ICON (WM_USER + 1)
+
+void ShowTrayIcon() {
+    Shell_NotifyIcon(NIM_ADD, &nidApp);
+}
+
+void HideTrayIcon() {
+    Shell_NotifyIcon(NIM_DELETE, &nidApp);
+}
+
+LRESULT CALLBACK MainWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+        case ID_TRAY_ICON:
+            switch (lParam) {
+                case WM_RBUTTONDOWN:
+                    std::cout << "Opening tray menu" << std::endl;
+                    POINT pt;
+                    GetCursorPos(&pt);
+                    SetForegroundWindow(hwnd);
+                    TrackPopupMenu(hContextMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, nullptr);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+            case WM_COMMAND:
+                switch (LOWORD(wParam)) {
+                    case IDM_MENU_ITEM1:
+                        // Perform action for Menu Item 1
+                        MessageBox(hwnd, L"Menu Item 1 selected", L"Info", MB_OK | MB_ICONINFORMATION);
+                        break;
+
+                    case IDM_MENU_ITEM2:
+                        // Perform action for Menu Item 2
+                        MessageBox(hwnd, L"Menu Item 2 selected", L"Info", MB_OK | MB_ICONINFORMATION);
+                        break;
+                }
+                break;
+
+        case WM_CLOSE:
+            HideTrayIcon();
+            DestroyWindow(hwnd);
+            break;
+
+        case WM_DESTROY:
+            HideTrayIcon();
+            DestroyIcon(nidApp.hIcon); // Release the loaded icon
+            PostQuitMessage(0);
+            break;
+
+        default:
+            return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+
+    return 0;
+}
+
+int buildTrayIcon(HWND hwnd) {
+    // Already set, don't touch it again
+    if (nidApp.hWnd != nullptr) {
+        return 0;
+    }
+
+    nidApp.cbSize = sizeof(NOTIFYICONDATA);
+    nidApp.hWnd = hwnd;
+    nidApp.uID = ID_TRAY_ICON; // Unique ID for the tray icon
+    nidApp.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+    nidApp.uCallbackMessage = ID_TRAY_ICON; // Custom message to handle tray icon events
+    nidApp.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_ICON1));
+
+    LoadString(GetModuleHandle(nullptr), IDS_STRING102, nidApp.szTip, sizeof(nidApp.szTip) / sizeof(nidApp.szTip[0])); // Replace IDS_APP_TITLE with your application title string resource
+
+    // Create a context menu
+    hContextMenu = CreatePopupMenu();
+    AppendMenu(hContextMenu, MF_STRING, IDM_MENU_ITEM1, L"Menu Item 1");
+    AppendMenu(hContextMenu, MF_STRING, IDM_MENU_ITEM2, L"Menu Item 2");
+
+    ShowTrayIcon();
+
+    return 0;
+}
+
 void checkWindowState() {
     while (true) {
         std::unique_lock<std::mutex> lock(windowStateMutex);
@@ -192,7 +281,29 @@ void checkWindowState() {
     }
 }
 
-int main() {
+void buildMainWindow(HINSTANCE hInstance) {
+    WNDCLASSEX wc = { sizeof(WNDCLASSEX) };
+    auto className = L"FunnyWindowManager";
+    wc.lpfnWndProc = MainWindowProcedure;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = className; 
+    RegisterClassEx(&wc);
+
+    // Create the i3win main window
+    HWND hwnd = CreateWindow(className, L"SomeTitle", WS_OVERLAPPEDWINDOW,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, nullptr, nullptr, hInstance, nullptr);
+
+    if (hwnd) {
+        ShowWindow(hwnd, SW_SHOWNORMAL);
+        buildTrayIcon(hwnd);
+        UpdateWindow(hwnd);
+        ShowTrayIcon();
+    } else {
+        std::cout << "Failed to create window" << std::endl;
+    }
+}
+
+int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
 
     if (g_keyboardHook == NULL) {
@@ -201,6 +312,8 @@ int main() {
     }
 
     logInfo("***    Window manager started ***");
+
+    buildMainWindow(hInstance);
 
     screen.initialize(g_screenWidth, g_screenHeight);
 
