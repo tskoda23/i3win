@@ -1,6 +1,7 @@
 #include <iostream>
 #include <windows.h>
 #include <list>
+
 #include "window.h"
 #include "config.h"
 #include "state.h"
@@ -27,7 +28,7 @@ struct Screen {
     int screenHeight;
     HWND lastWindowSwappedWithMainWindow;
 
-    void initialize(int screenWidth, int screenHeight);
+    void initialize();
     void addWindow(Window window);  
     void removeWindow(HWND hwnd);  
     void onBeforeWindowsRegistered();

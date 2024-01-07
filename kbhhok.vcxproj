@@ -137,6 +137,8 @@
     <ClCompile Include="src/config.cpp" />
     <ClCompile Include="src/logger.cpp" />
     <ClCompile Include="src/environment.cpp" />
+    <ClCompile Include="src\hotkey.cpp" />
+    <ClCompile Include="src\workspace.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
