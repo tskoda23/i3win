@@ -99,7 +99,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             lock_guard<mutex> lock(windowStateMutex);
             DWORD keycode = pKeyInfo->vkCode;
 
-            hotkeyPressed = hotkey.handleKeyPress(keycode, workspace);
+            hotkeyPressed = hotkey.handleKeyPress(keycode, &workspace);
             
             if(hotkeyPressed){
                 return CATCH_KEYBOARD_EVENT;

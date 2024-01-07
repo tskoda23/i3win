@@ -8,32 +8,35 @@
 
 using namespace std;
 
-void Hotkey::switchToWorkspace(int wsp, Workspace workspace){
-    if(workspace.activeWsp != wsp){
-        printf("Switch to workspace %d\n", wsp);
-        workspace.activeScreen->hideWindows();
-        workspace.setActiveWsp(wsp);
-        workspace.activeScreen->showWindows();
-        buildLayout(workspace.activeScreen);
+void Hotkey::switchToWorkspace(int wsp, Workspace *workspace){
+    printf("Trying to switch to workspace %d from %d\n", wsp, workspace->activeWsp);
+
+    if(workspace->activeWsp != wsp){
+        printf("switch to workspace %d from %d\n", wsp, workspace->activeWsp);
+        workspace->activeScreen->hideWindows();
+        workspace->setActiveWsp(wsp);
+        printf("Active workspace is now %d\n", workspace->activeWsp);
+        workspace->activeScreen->showWindows();
+        buildLayout(workspace->activeScreen);
     }else{
         printf("Already on the same workspace %d\n", wsp);
     }
 }
 
-void Hotkey::moveWindowToWorkspace(int wsp, Workspace workspace){
-    if(workspace.activeWsp != wsp){
+void Hotkey::moveWindowToWorkspace(int wsp, Workspace *workspace){
+    if(workspace->activeWsp != wsp){
         printf("Move window to workspace %d\n", wsp);
-        Window win = workspace.activeScreen->focusedWindow;
+        Window win = workspace->activeScreen->focusedWindow;
         win.hide();
-        workspace.activeScreen->removeWindow(win.hwnd);
-        workspace.screens[wsp].addWindow(win);
-        buildLayout(workspace.activeScreen);
+        workspace->activeScreen->removeWindow(win.hwnd);
+        workspace->screens[wsp].addWindow(win);
+        buildLayout(workspace->activeScreen);
     }else{
         printf("Already on the same workspace %d\n", wsp);
     }
 }
 
-bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
+bool Hotkey::handleKeyPress(DWORD keycode, Workspace *workspace){
     bool hotkeyPressed = false;
     int keycodenum = keycode - '0';
 
@@ -41,15 +44,15 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
         hotkeyPressed = true;
         switch(keycode){
             case 'Q':
-                workspace.activeScreen->closeFocusedWindow();
+                workspace->activeScreen->closeFocusedWindow();
                 break;
             case VK_LEFT:
-                workspace.activeScreen->moveFocusedWindowLeft();
-                buildLayout(workspace.activeScreen);
+                workspace->activeScreen->moveFocusedWindowLeft();
+                buildLayout(workspace->activeScreen);
                 break;
             case VK_RIGHT:
-                workspace.activeScreen->moveFocusedWindowRight();
-                buildLayout(workspace.activeScreen);
+                workspace->activeScreen->moveFocusedWindowRight();
+                buildLayout(workspace->activeScreen);
                 break;
             case '0':
                 moveWindowToWorkspace(9, workspace);
@@ -73,22 +76,22 @@ bool Hotkey::handleKeyPress(DWORD keycode, Workspace workspace){
         hotkeyPressed = true;
         switch(keycode){
             case 'A':
-                workspace.activeScreen->setActiveLayout(LAYOUT_TYPE_STACKED);
-                buildLayout(workspace.activeScreen);
+                workspace->activeScreen->setActiveLayout(LAYOUT_TYPE_STACKED);
+                buildLayout(workspace->activeScreen);
                 break;
             case 'B':
-                workspace.activeScreen->setActiveLayout(LAYOUT_TYPE_SPLIT);
-                buildLayout(workspace.activeScreen);
+                workspace->activeScreen->setActiveLayout(LAYOUT_TYPE_SPLIT);
+                buildLayout(workspace->activeScreen);
                 break;
             case 'C':
-                workspace.activeScreen->setActiveLayout(LAYOUT_TYPE_CENTERED);
-                buildLayout(workspace.activeScreen);
+                workspace->activeScreen->setActiveLayout(LAYOUT_TYPE_CENTERED);
+                buildLayout(workspace->activeScreen);
                 break;
             case VK_LEFT:
-                workspace.activeScreen->moveFocusLeft();
+                workspace->activeScreen->moveFocusLeft();
                 break;
             case VK_RIGHT:
-                workspace.activeScreen->moveFocusRight();
+                workspace->activeScreen->moveFocusRight();
                 break;
             case '0':
                 switchToWorkspace(9, workspace);

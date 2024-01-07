@@ -2,7 +2,7 @@
 #include "screen.h"
 
 void Workspace::init(){
-    if(!this->isInit){
+    if(!isInit){
 
         for(int i = 0; i < 10; i++){
             Screen newScreen;
@@ -17,6 +17,6 @@ void Workspace::init(){
 }
 
 void Workspace::setActiveWsp(int wsp){
-    this->activeWsp = wsp;
-    this->activeScreen = &screens[wsp];
+    activeWsp = wsp;
+    activeScreen = &screens[wsp];
 }
