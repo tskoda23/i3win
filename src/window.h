@@ -17,6 +17,8 @@ struct Window {
 
     bool isHidden();
     bool move(int x, int y, int width, int height);
+    void hide();
+    void show();
 };
 
 bool operator<(const Window& lhs, const Window& rhs);

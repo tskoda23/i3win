@@ -5,6 +5,6 @@
 #ifndef LAYOUTS_H
 #define LAYOUTS_H
 
-void buildLayout(Screen screen);
+void buildLayout(Screen *screen);
 
 #endif
