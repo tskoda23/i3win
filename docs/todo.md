@@ -5,7 +5,6 @@
 - command to move window to start/end
 - can't move windows with admin right unless this program is also ran with admin rights
 - add keyboard shortcut to minimize window
-- prevent some windows tray popups from being registered as windows
 
 ## UI Stuff
 - add tray icon (show active workspace number)
