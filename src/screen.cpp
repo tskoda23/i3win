@@ -4,23 +4,34 @@
 #include <list>
 #include <algorithm>
 #include <iterator>
+
 #include "window.h"
 #include "screen.h"
 #include "logger.h"
 #include "state.h"
 
-void Screen::initialize(int screenWidth, int screenHeight) {
-    this->layoutType = layoutType;
-    this->screenWidth = screenWidth;
-    this->screenHeight = screenHeight;
-    this->config = Config();
-    this->state = State();
+void Screen::initialize() {
+    layoutType = layoutType;
+    screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    config = Config();
+    state = State();
 
-    this->layoutType = (LayoutType) state.getNumericValue(ACTIVE_LAYOUT);
+    layoutType = (LayoutType) state.getNumericValue(ACTIVE_LAYOUT);
 }
 
 void Screen::addWindow(Window window) {
     windows.push_front(window);
+}
+
+void Screen::removeWindow(HWND hwnd) {
+    auto window = std::find_if(windows.begin(), windows.end(),
+        [hwnd](const Window& obj) {
+            return obj.hwnd == hwnd;
+        }
+    );
+
+    windows.erase(window);
 }
 
 void Screen::onBeforeWindowsRegistered() {
@@ -223,4 +234,18 @@ void Screen::setAsMainWindow() {
         logInfo("Can't set window as main");
     }
 
+}
+
+void Screen::hideWindows(){
+    isHidden = true;
+     for (Window window : windows) {
+        window.hide();
+     }   
+}
+
+void Screen::showWindows(){
+    isHidden = false;
+    for (Window window : windows) {
+        window.show();
+    }   
 }
