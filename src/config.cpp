@@ -50,11 +50,7 @@ Config::Config() {
 }
 
 int Config::getNumericValue(std::string key) {
-    auto value = configValues[key];
-
-    if (value.empty()) {
-        value = defaultConfigValues[key];
-    }
+    auto value = getValue(key);
 
     try {
         return std::stoi(value);
@@ -72,6 +68,14 @@ std::string Config::getValue(std::string key) {
 
      if (value.empty()) {
         return defaultConfigValues[key];
-    }
+     }
+
+     if (value[0] == '"') {
+         auto err = "Config values shouldn't be wrapped in quotes.";
+         logError(err);
+         throw err;
+     }
+
+     return value;
 }
 

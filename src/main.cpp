@@ -25,26 +25,30 @@ Screen screen;
 
 std::mutex windowStateMutex;
 
-// Filter out internal windows OS stuff that's always shown
-BOOL IsWindowsClassName(std::string className) {
-    return className == "Progman" ||
-    className == "MultitaskingViewFrame";
-}
-
 BOOL IsWindowCloaked(HWND hwnd)
 {
     BOOL isCloaked = FALSE;
     return SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED,&isCloaked, sizeof(isCloaked))) && isCloaked;
 }
 
+BOOL ShouldRegisterWindow(Window window) {
+    if (!IsWindowVisible(window.hwnd) || !IsWindow(window.hwnd) || IsIconic(window.hwnd) || IsWindowCloaked(window.hwnd) || window.isHidden())
+    {
+        return false;
+    }
+
+    bool canWindowBeResized = (GetWindowLong(window.hwnd, GWL_STYLE) & WS_THICKFRAME) != 0;
+
+    return canWindowBeResized
+        && window.className != "Progman"; // Some Windows OS thing
+}
+
 void registerNewWindow(Window window) {
     // pass WM_DISPLAYCHANGE if resolution changed
     // check if it has title
-    if (IsWindowVisible(window.hwnd) && IsWindow(window.hwnd) && !IsWindowCloaked(window.hwnd) && !IsIconic(window.hwnd) && !IsWindowsClassName(window.className))
+    if (ShouldRegisterWindow(window))
     {
-        if (!window.isHidden()) {
-            screen.addWindow(window);
-        }
+        screen.addWindow(window);
     }
 }
 
@@ -87,7 +91,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
         if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
             std:string message = "";
-
+   
             // Lock guard's destructor will unlock the mutex automatically at the end of block
             std::lock_guard<std::mutex> lock(windowStateMutex);
 

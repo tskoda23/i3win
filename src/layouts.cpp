@@ -50,8 +50,11 @@ void buildStackedLayout(Screen screen) {
 }
 
 void buildSplitLayout(Screen screen) {
+    int additionalPadding = screen.config.getNumericValue(ADDITIONAL_WINDOW_PADDING);
+    int totalPadding = additionalPadding * (screen.windows.size() - 1);
+
     int mainWindowWidth = screen.screenWidth * getMainWindowWidthPercentage(screen) / 100;
-    int otherWindowsWidth = (screen.screenWidth - mainWindowWidth) / (screen.windows.size() - 1);
+    int otherWindowsWidth = (screen.screenWidth - mainWindowWidth - totalPadding) / (screen.windows.size() - 1);
 
     int windowCount = 0;
 
@@ -60,7 +63,11 @@ void buildSplitLayout(Screen screen) {
 
         int xPosition = isMainWindow
             ? 0
-            : mainWindowWidth + (windowCount - 1) * otherWindowsWidth;
+            : mainWindowWidth 
+                // width of all windows before this one
+                + (windowCount - 1) * otherWindowsWidth
+                // plus all the padding between windows
+                + (windowCount * additionalPadding);
 
         int width = isMainWindow
             ? mainWindowWidth

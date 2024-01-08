@@ -5,7 +5,6 @@
 - command to move window to start/end
 - can't move windows with admin right unless this program is also ran with admin rights
 - add keyboard shortcut to minimize window
-- change stacked layout to align windows horizontally 
 
 ## UI Stuff
 - add tray icon (show active workspace number)
@@ -16,3 +15,6 @@
 
 ## Performance
 - avoid redrawing layout if no new windows appear
+
+## Bugs
+    - if caps lock is used as modifier key, we should disable its default behaviour completely
