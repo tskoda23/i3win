@@ -1,7 +1,5 @@
-﻿#include "layouts.h"
-#include "screen.h"
-#include "window.h"
-#include "environment.h"
+﻿#include "environment.h"
+#include "logger.h"
 
 #include <windows.h>
 #include <psapi.h>

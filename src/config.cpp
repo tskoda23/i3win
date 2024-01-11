@@ -49,7 +49,7 @@ Config::Config() {
     loadConfigurationData();
 }
 
-int Config::getNumericValue(std::string key) {
+int Config::getNumericValue(const std::string &key) {
     auto value = getValue(key);
 
     try {
@@ -63,7 +63,7 @@ int Config::getNumericValue(std::string key) {
     
 }
 
-std::string Config::getValue(std::string key) {
+std::string Config::getValue(const std::string &key) {
     auto value = configValues[key];
 
      if (value.empty()) {

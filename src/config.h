@@ -101,8 +101,8 @@ class Config {
     public: 
         Config();
         void reload();
-        int getNumericValue(string key);
-        string getValue(string key);
+        int getNumericValue(const string &key);
+        string getValue(const string &key);
     private:
         unordered_map<string, string> configValues;
         void loadConfigurationData();

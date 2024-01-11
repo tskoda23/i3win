@@ -1,15 +1,12 @@
-#include<windows.h>
+#include <windows.h>
 
-#include "screen.h"
-#include "workspace.h"
+#include "workspace_manager.h"
 
 #ifndef HOTKEY_H 
 #define HOTKEY_H 
 
-struct Hotkey{
-    void switchToWorkspace(int wsp, Workspace *workspace);
-    void moveWindowToWorkspace(int wsp, Workspace *workspace);
-    bool handleKeyPress(DWORD keycode, Workspace *workspace);
+struct Hotkey {
+    bool handleKeyPress(DWORD keycode, WorkspaceManager &workspaceManager);
 };
 
 #endif

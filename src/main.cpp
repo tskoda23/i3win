@@ -8,26 +8,27 @@
 #include <thread>
 #include <future>
 
-#include "layouts.h"
 #include "window.h"
 #include "screen.h"
 #include "logger.h"
 #include "hotkey.h"
 #include "environment.h"
 #include "state.h"
+#include "layouts.h"
+#include "workspace_manager.h"
 #include "workspace.h"
 
 using namespace std;
 
 HHOOK g_keyboardHook;
 
-bool debug = true; 
-bool showRealTimeState = false;
-
-Workspace workspace;
 Hotkey hotkey;
+WorkspaceManager workspaceManager = WorkspaceManager();
 
 std::mutex windowStateMutex;
+
+bool debug = true;
+bool showRealTimeState = true;
 
 BOOL IsWindowCloaked(HWND hwnd)
 {
@@ -35,8 +36,9 @@ BOOL IsWindowCloaked(HWND hwnd)
     return SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED,&isCloaked, sizeof(isCloaked))) && isCloaked;
 }
 
-BOOL ShouldRegisterWindow(Window window) {
-    if (!IsWindowVisible(window.hwnd) || !IsWindow(window.hwnd) || IsIconic(window.hwnd) || IsWindowCloaked(window.hwnd) || window.isHidden())
+BOOL ShouldRegisterWindow(Window& window) {
+    if (!IsWindowVisible(window.hwnd) || !IsWindow(window.hwnd) || IsIconic(window.hwnd)
+        || IsWindowCloaked(window.hwnd) || window.isHidden())
     {
         return false;
     }
@@ -47,12 +49,12 @@ BOOL ShouldRegisterWindow(Window window) {
         && window.className != "Progman"; // Some Windows OS thing
 }
 
-void registerNewWindow(Window window) {
+void registerNewWindow(Window& window) {
     // pass WM_DISPLAYCHANGE if resolution changed
     // check if it has title
     if (ShouldRegisterWindow(window))
     {
-        screen.addWindow(window);
+        workspaceManager.getActiveWorkspace()->addWindow(window);
     }
 }
 
@@ -71,19 +73,21 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     Window newFwin = getWindowFromHWND(fWinH);
     newFwin.isInitialized = 1;
 
-    if(workspace.activeScreen->focusedWindow.isInitialized == 0 
-    || workspace.activeScreen->focusedWindow.hwnd != newFwin.hwnd){
-        workspace.activeScreen->setFocusedWindow(newFwin);
-    }
-
     // Exit early if window is popup or something not a real window
     if (!IsMainWindow(hwnd) || !hasTitle(hwnd)) {
-        return TRUE;    
+        return TRUE;
     }
 
-    Window Window = getWindowFromHWND(hwnd);
+    Window window = getWindowFromHWND(hwnd);
 
-    registerNewWindow(Window);
+    registerNewWindow(window);
+
+    auto activeWorkspace = workspaceManager.getActiveWorkspace();
+
+    if(activeWorkspace->focusedWindow.isInitialized == 0
+        || activeWorkspace->focusedWindow.hwnd != newFwin.hwnd) {
+        activeWorkspace->setFocusedWindow(newFwin);
+    }
 
     return TRUE;
 }
@@ -102,8 +106,8 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
             lock_guard<mutex> lock(windowStateMutex);
             DWORD keycode = pKeyInfo->vkCode;
 
-            hotkeyPressed = hotkey.handleKeyPress(keycode, &workspace);
-            
+            hotkeyPressed = hotkey.handleKeyPress(keycode, workspaceManager);
+
             if(hotkeyPressed){
                 return CATCH_KEYBOARD_EVENT;
             }
@@ -113,36 +117,45 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
 }
 
-void printWindowState(Screen *screen) {
-    system("cls");
-    cout << "Currently active windows: " << screen->windows.size() << endl;
-        
-    int position = 0;
-    for (auto window : screen->windows) {
-        cout << position++ << " - " << window.title;
+void printWindowState(const Workspace &workspace) {
+    // system("cls");
 
-        if (window.hwnd == screen->focusedWindow.hwnd) {
-            cout << " - FOCUSED";
-        }
+    auto workspaces = workspaceManager.getAllWorkspaces();
 
-        cout << endl;
-    }
+    for_each(workspaces.begin(), workspaces.end(), [](Workspace* workspace) {
+         if (workspace->windows.size() == 0) {
+             return;
+         }
+
+        // cout << "Workspace " << workspace->workspaceIndex << endl;
+
+        // int position = 0;
+        // for (auto window : workspace->windows) {
+        //     cout << "  " << position++ << " - " << window->title;
+
+        //     if (window->hwnd == workspace->focusedWindow->hwnd) {
+        //         cout << " - FOCUSED";
+        //     }
+
+        //     cout << endl;
+        // }
+    });
 }
 
 void checkWindowState() {
     while (true) {
         unique_lock<mutex> lock(windowStateMutex);
 
-        workspace.activeScreen->onBeforeWindowsRegistered();
+        workspaceManager.getActiveWorkspace()->onBeforeWindowsRegistered();
 
         EnumWindows(handleWindow, NULL);
 
-        workspace.activeScreen->onAfterWindowsRegistered();
-        
-        buildLayout(workspace.activeScreen);
+        workspaceManager.getActiveWorkspace()->onAfterWindowsRegistered();
+
+        buildLayout(*workspaceManager.getActiveWorkspace());
 
         if (showRealTimeState) {
-            printWindowState(workspace.activeScreen);    
+            printWindowState(*workspaceManager.getActiveWorkspace());
         }
 
         lock.unlock();
@@ -159,11 +172,9 @@ int main() {
         return 1;
     }
 
-    workspace.init();
-
     logInfo("***    Window manager started ***");
 
-    // Chechk window state each second and update layout
+    // Check window state each second and update layout
     future<void> asyncResult = async(launch::async, checkWindowState);
 
     // Message loop or other application logic goes here

@@ -91,4 +91,6 @@ std::string State::getValue(std::string key) {
      if (value.empty()) {
         return defaultStateValues[key];
     }
+
+     return value;
 }

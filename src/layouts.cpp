@@ -1,20 +1,12 @@
 ﻿#include "layouts.h"
-#include "screen.h"
-#include "window.h"
 #include "logger.h"
-
-#include <windows.h>
-#include <psapi.h>
-#include <winerror.h>
-#include <dwmapi.h>
-#include <vector>
-#include <iostream>
+#include "workspace.h"
 
 const int taskbarSize = 50;
 
-int getMainWindowWidthPercentage(Screen *screen) {
-    int centerWindowWidthFromConfig = screen->config.getNumericValue(MAIN_WINDOW_WIDTH_PERCENTAGE);
-    int centerWindowWidthChange = screen->state.getNumericValue(MAIN_WINDOW_PERCENTAGE_CHANGE);
+int getMainWindowWidthPercentage(Workspace &workspace) {
+    int centerWindowWidthFromConfig = workspace.config.getNumericValue(MAIN_WINDOW_WIDTH_PERCENTAGE);
+    int centerWindowWidthChange = workspace.state.getNumericValue(MAIN_WINDOW_PERCENTAGE_CHANGE);
 
     int percentage = centerWindowWidthFromConfig + centerWindowWidthChange;
 
@@ -29,19 +21,19 @@ int getMainWindowWidthPercentage(Screen *screen) {
     return percentage;
 }
 
-void buildStackedLayout(Screen *screen) {
+void buildStackedLayout(Workspace &workspace) {
     int windowsRendered = 0;
     int margin = 50;
 
-    for (auto window : screen->windows) {
+    for (auto window : workspace.windows) {
         int startMargin = margin * windowsRendered;
-        int endMargin = margin * (screen->windows.size() - windowsRendered - 1);
+        int endMargin = margin * (workspace.windows.size() - windowsRendered - 1);
 
         bool isWindowMovedSuccessfully = window.move(
             startMargin,
             0,
-            screen->screenWidth - startMargin - endMargin,
-            screen->screenHeight - taskbarSize);
+            workspace.screenWidth - startMargin - endMargin,
+            workspace.screenHeight - taskbarSize);
 
         if (isWindowMovedSuccessfully) {
             windowsRendered++;
@@ -49,16 +41,17 @@ void buildStackedLayout(Screen *screen) {
     }
 }
 
-void buildSplitLayout(Screen &screen) {
-    int additionalPadding = screen.config.getNumericValue(ADDITIONAL_WINDOW_PADDING);
-    int totalPadding = additionalPadding * (screen.windows.size() - 1);
+void buildSplitLayout(Workspace &workspace) {
+    int additionalPadding = workspace.config.getNumericValue(ADDITIONAL_WINDOW_PADDING);
+    int totalPadding = additionalPadding * (workspace.windows.size() - 1);
 
-    int mainWindowWidth = screen.screenWidth * getMainWindowWidthPercentage(screen) / 100;
-    int otherWindowsWidth = (screen.screenWidth - mainWindowWidth - totalPadding) / (screen.windows.size() - 1);
+    int mainWindowWidth = workspace.screenWidth * getMainWindowWidthPercentage(workspace) / 100;
+    int a = workspace.windows.size();
+    int otherWindowsWidth = (workspace.screenWidth - mainWindowWidth - totalPadding) / (a - 1);
 
     int windowCount = 0;
 
-    for (auto window : screen.windows) {
+    for (auto window : workspace.windows) {
         bool isMainWindow = windowCount == 0;
 
         int xPosition = isMainWindow
@@ -77,7 +70,7 @@ void buildSplitLayout(Screen &screen) {
             xPosition,
             0,
             width,
-            screen->screenHeight - taskbarSize);
+            workspace.screenHeight - taskbarSize);
 
         if (isWindowMovedSuccessfully) {
             windowCount++;
@@ -86,19 +79,19 @@ void buildSplitLayout(Screen &screen) {
     
 }
 
-void buildCenteredLayout(Screen *screen) {
-    int windowsCount = screen->windows.size();
+void buildCenteredLayout(Workspace &workspace) {
+    int windowsCount = workspace.windows.size();
 
-    int centerWindowWidth = screen->screenWidth * getMainWindowWidthPercentage(screen) / 100;
+    int centerWindowWidth = workspace.screenWidth * getMainWindowWidthPercentage(workspace) / 100;
 
     int windowCount = 0;
 
-    for (auto window : screen->windows) {
+    for (auto window : workspace.windows) {
 
         int xPosition, yPosition, width, height;
 
-        int sideWindowWidth = (screen->screenWidth - centerWindowWidth) / 2;
-        int centerWindowHeight = screen->screenHeight - taskbarSize;
+        int sideWindowWidth = (workspace.screenWidth - centerWindowWidth) / 2;
+        int centerWindowHeight = workspace.screenHeight - taskbarSize;
 
         if (windowCount == 0) {
             window.move(
@@ -108,7 +101,7 @@ void buildCenteredLayout(Screen *screen) {
                 centerWindowHeight);
         } else {
             int numberOfSideWindows = windowsCount - 1;
-            int isLeftSideWindow = windowCount <= (screen->windows.size() / 2);
+            int isLeftSideWindow = windowCount <= (workspace.windows.size() / 2);
 
             int numberOfWindowsOnThisSide = isLeftSideWindow
                 ? windowsCount / 2
@@ -136,30 +129,30 @@ void buildCenteredLayout(Screen *screen) {
     }
 }
 
-void buildLayout(Screen *screen) {
-    if(screen->windows.size() > 1){
-        switch (screen->layoutType)
+void buildLayout(Workspace &workspace) {
+    if(workspace.windows.size() > 1){
+        switch (workspace.layoutType)
         {
-        case LAYOUT_TYPE_NONE:
-            break;
-        case LAYOUT_TYPE_STACKED:
-            buildStackedLayout(screen);
-            break;
-        case LAYOUT_TYPE_SPLIT:
-            buildSplitLayout(screen);
-            break;
-        case LAYOUT_TYPE_CENTERED:
-            buildCenteredLayout(screen);
-            break;
-        default:
-            logError("Unknown layout type, doing nothing.");
-            break;
+            case LAYOUT_TYPE_NONE:
+                break;
+            case LAYOUT_TYPE_STACKED:
+                buildStackedLayout(workspace);
+                break;
+            case LAYOUT_TYPE_SPLIT:
+                buildSplitLayout(workspace);
+                break;
+            case LAYOUT_TYPE_CENTERED:
+                buildCenteredLayout(workspace);
+                break;
+            default:
+                logError("Unknown layout type, doing nothing.");
+                break;
         }
-    }else if(screen->windows.size() == 1){
-        screen->windows.front().move(
+    }else if(workspace.windows.size() == 1){
+        workspace.windows.front().move(
             0,
             0,
-            screen->screenWidth,
-            screen->screenHeight - taskbarSize);
+            workspace.screenWidth,
+            workspace.screenHeight - taskbarSize);
     }
 }

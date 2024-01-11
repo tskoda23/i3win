@@ -5,52 +5,24 @@
 #include "window.h"
 #include "config.h"
 #include "state.h"
+#include "workspace.h"
 
 #ifndef SCREEN_H
 #define SCREEN_H
 
-// TODO: This was part of layouts.h, but had to move it here to avoid circular reference
-enum LayoutType {
-    LAYOUT_TYPE_NONE = 0,
-    LAYOUT_TYPE_STACKED,
-    LAYOUT_TYPE_SPLIT,
-    LAYOUT_TYPE_CENTERED,
-};
-
 struct Screen {
-    LayoutType layoutType;
+    Screen(Config &config, State &state, int screenWidth, int screenHeight);
+    
     Config config;
     State state;
-    std::list<HWND> windowIndexes;
-    std::list<Window> windows;
-    Window focusedWindow;
     int screenWidth;
     int screenHeight;
-    HWND lastWindowSwappedWithMainWindow;
-
-    void initialize();
-    void addWindow(Window window);  
-    void removeWindow(HWND hwnd);  
-    void onBeforeWindowsRegistered();
-    void setFocusedWindow(Window window);
-    void onAfterWindowsRegistered();
-    void setActiveLayout(LayoutType layout);
     
-    void moveFocusLeft();
-    void moveFocusRight();
+    Workspace *activeWorkspace;
 
-    void moveFocusedWindowLeft();
-    void moveFocusedWindowRight();
-
-    void changeMainWindowSize(int screenPercentageChange);
-    void setAsMainWindow();
-
+    void setActiveWorkspace(Workspace &workspace);
     void reloadConfig();
 
-    Window getWindow(HWND hwnd);
-
-    void closeFocusedWindow();
-    bool isHidden = false;
     void hideWindows();
     void showWindows();
 };
