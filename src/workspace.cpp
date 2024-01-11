@@ -25,10 +25,6 @@ Workspace::Workspace(
 
 void Workspace::addWindow(Window& window) {
     this->windows.push_front(window);
-
-    // if (focusedWindow == nullptr) {
-    //     setFocusedWindow(window);
-    // }
 }
 
 void Workspace::removeWindow(HWND hwnd) {
@@ -38,6 +34,7 @@ void Workspace::removeWindow(HWND hwnd) {
         }
     );
 
+    window->hide();
     windows.erase(window);
 }
 

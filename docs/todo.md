@@ -27,4 +27,3 @@
 
     - if caps lock is used as modifier key, we should disable its default behaviour completely
     - main window size should maybe be applied per-workspace, not globally
-    - if only one window in layout, it should take full size

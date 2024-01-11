@@ -10,7 +10,7 @@ WorkspaceManager::WorkspaceManager()
     state(State()),
     screenWidth(GetSystemMetrics(SM_CXSCREEN)),
     screenHeight(GetSystemMetrics(SM_CYSCREEN)),
-    screen(config, state, screenWidth, screenHeight)
+    screen(screenWidth, screenHeight)
 {
     for (int i = 0; i < 10; i++)
     {
@@ -29,28 +29,23 @@ std::vector<Workspace*> WorkspaceManager::getAllWorkspaces()
 
 Workspace *WorkspaceManager::getActiveWorkspace()
 {
-    if (this->screen.activeWorkspace == nullptr) {
-        logError("No active workspace, setting it to first one.");
-        this->screen.setActiveWorkspace(*workspaces.at(0));
-    }
-
     return this->screen.activeWorkspace;
 }
 
-void WorkspaceManager::setActiveWorkspace(int index)
+void WorkspaceManager::setActiveWorkspace(int workspaceIndex)
 {
-    if (index == this->screen.activeWorkspace->workspaceIndex)
+    if (workspaceIndex == this->screen.activeWorkspace->workspaceIndex)
     {
-        logInfo("Already on workspace " + std::to_string(index));
+        logInfo("Already on workspace " + std::to_string(workspaceIndex));
         return;
     }
 
-    Workspace* nextWorkspace = this->workspaces.at(index);
+    Workspace* nextWorkspace = this->workspaces.at(workspaceIndex);
 
     this->screen.activeWorkspace->hideWindows();
     nextWorkspace->showWindows();
 
-    logInfo("Switch to workspace " + std::to_string(index));
+    logInfo("Switch to workspace " + std::to_string(workspaceIndex));
     this->screen.activeWorkspace = nextWorkspace;
 }
 
@@ -65,8 +60,13 @@ void WorkspaceManager::moveActiveWindowToWorkspace(int workspaceIndex)
     logInfo("Move window to workspace " + std::to_string(workspaceIndex));
 
     auto windowToMove = this->getActiveWorkspace()->focusedWindow;
-    auto workspaceToMoveTo = this->workspaces[workspaceIndex];
+    auto workspaceToMoveTo = this->workspaces.at(workspaceIndex);
 
     workspaceToMoveTo->addWindow(windowToMove);
     this->getActiveWorkspace()->removeWindow(windowToMove.hwnd);
+}
+
+void WorkspaceManager::reloadConfig() {
+    config.reload();
+    logInfo("Config reloaded.");
 }
