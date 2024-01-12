@@ -12,6 +12,7 @@ class WorkspaceManager {
 
         Workspace* getActiveWorkspace();
         std::vector<Workspace*> getAllWorkspaces();
+        Config config;
 
         void setActiveWorkspace(int workspaceIndex);
         void moveActiveWindowToWorkspace(int workspaceIndex);
@@ -20,7 +21,6 @@ class WorkspaceManager {
         int screenWidth;
         int screenHeight;
         std::vector<Workspace*> workspaces;
-        Config config;
         State state;
         Screen screen;
 };

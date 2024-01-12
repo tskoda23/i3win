@@ -28,7 +28,7 @@ WorkspaceManager workspaceManager = WorkspaceManager();
 std::mutex windowStateMutex;
 
 bool debug = true;
-bool showRealTimeState = true;
+bool showRealTimeState = false;
 
 BOOL IsWindowCloaked(HWND hwnd)
 {
@@ -51,7 +51,6 @@ BOOL ShouldRegisterWindow(Window& window) {
 
 void registerNewWindow(Window& window) {
     // pass WM_DISPLAYCHANGE if resolution changed
-    // check if it has title
     if (ShouldRegisterWindow(window))
     {
         workspaceManager.getActiveWorkspace()->addWindow(window);
@@ -118,7 +117,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 void printWindowState(const Workspace &workspace) {
-    // system("cls");
+    system("cls");
 
     auto workspaces = workspaceManager.getAllWorkspaces();
 
@@ -127,18 +126,18 @@ void printWindowState(const Workspace &workspace) {
              return;
          }
 
-        // cout << "Workspace " << workspace->workspaceIndex << endl;
+        cout << "Workspace " << workspace->workspaceIndex << endl;
 
-        // int position = 0;
-        // for (auto window : workspace->windows) {
-        //     cout << "  " << position++ << " - " << window->title;
+        int position = 0;
+        for (auto window : workspace->windows) {
+            cout << "  " << position++ << " - " << window.title;
 
-        //     if (window->hwnd == workspace->focusedWindow->hwnd) {
-        //         cout << " - FOCUSED";
-        //     }
+            if (window.hwnd == workspace->focusedWindow.hwnd) {
+                cout << " - FOCUSED";
+            }
 
-        //     cout << endl;
-        // }
+            cout << endl;
+        }
     });
 }
 

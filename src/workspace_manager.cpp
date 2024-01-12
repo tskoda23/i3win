@@ -7,22 +7,24 @@
 
 WorkspaceManager::WorkspaceManager()
     : config(Config()),
-    state(State()),
-    screenWidth(GetSystemMetrics(SM_CXSCREEN)),
-    screenHeight(GetSystemMetrics(SM_CYSCREEN)),
-    screen(screenWidth, screenHeight)
+      state(State()),
+      screenWidth(GetSystemMetrics(SM_CXSCREEN)),
+      screenHeight(GetSystemMetrics(SM_CYSCREEN)),
+      screen(screenWidth, screenHeight)
 {
     for (int i = 0; i < 10; i++)
     {
+        // TODO: Figure out why it doesn't work with a string constant here
+        auto activeLayout = (LayoutType) state.getNumericValue("ACTIVE_LAYOUT");
+
         this->workspaces.push_back(
-            new Workspace(i, screenWidth, screenHeight, LAYOUT_TYPE_NONE, config, state)
-        );
+            new Workspace(i, screenWidth, screenHeight, activeLayout, config, state));
     }
 
-    this->screen.setActiveWorkspace(*workspaces.at(0));
+    this->screen.setActiveWorkspace(*workspaces.at(1));
 }
 
-std::vector<Workspace*> WorkspaceManager::getAllWorkspaces()
+std::vector<Workspace *> WorkspaceManager::getAllWorkspaces()
 {
     return this->workspaces;
 }
@@ -40,7 +42,7 @@ void WorkspaceManager::setActiveWorkspace(int workspaceIndex)
         return;
     }
 
-    Workspace* nextWorkspace = this->workspaces.at(workspaceIndex);
+    Workspace *nextWorkspace = this->workspaces.at(workspaceIndex);
 
     this->screen.activeWorkspace->hideWindows();
     nextWorkspace->showWindows();
@@ -66,7 +68,8 @@ void WorkspaceManager::moveActiveWindowToWorkspace(int workspaceIndex)
     this->getActiveWorkspace()->removeWindow(windowToMove.hwnd);
 }
 
-void WorkspaceManager::reloadConfig() {
+void WorkspaceManager::reloadConfig()
+{
     config.reload();
     logInfo("Config reloaded.");
 }

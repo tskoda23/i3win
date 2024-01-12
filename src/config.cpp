@@ -7,13 +7,13 @@
 #include "logger.h"
 #include "environment.h"
 
-static std::string configPath = getAppStoragePath() + "i3win.conf";
-
 void Config::loadConfigurationData() {  
-    std::ifstream inputFile(configPath);
+    std::ifstream inputFile(storagePath);
+
+    getAppStoragePath();
 
     if (!inputFile.is_open()) {
-        logError("Error opening the config file! " + configPath);
+        logError("Error opening the config file! " + storagePath);
         return;
     }
 
@@ -46,6 +46,7 @@ void Config::reload() {
 }
 
 Config::Config() {
+    this->storagePath = getAppStoragePath() + "i3win.conf";
     loadConfigurationData();
 }
 
@@ -64,6 +65,11 @@ int Config::getNumericValue(const std::string &key) {
 }
 
 std::string Config::getValue(const std::string &key) {
+    if (key.empty()) {
+        logError("Empty key provided for value");
+        throw;
+    }
+
     auto value = configValues[key];
 
      if (value.empty()) {
