@@ -13,6 +13,11 @@ int KEY_PRESSED = 0x8000;
 bool HOTKEY_DETECTED = true;
 
 std::unordered_map<std::string, int> keys = {
+    {"left", VK_LEFT},
+    {"right", VK_RIGHT},
+    {"up", VK_UP},
+    {"down", VK_DOWN},
+
     {"alt", VK_MENU},
     {"ralt", VK_RMENU},
     {"lalt", VK_LMENU},
@@ -28,18 +33,19 @@ std::unordered_map<std::string, int> keys = {
     {"caps", VK_CAPITAL}
 };
 
-bool keyPressed(DWORD keyCode, std::string key) {
+bool keyPressed(DWORD keyCode, string key) {
     if (key.empty()) {
         logError("Key length is 0");
         throw "Key length is 0";
     }
-    
-    if (key.length() > 1) {
-        logError("Key length is greater than 1");
-        throw "Key length is greater than 1";
-    }
 
-    return keyCode == toupper(key[0]);
+    // If it's one-char letter/number just convert it to char, otherwise it has to be special key, 
+    // so take it from the keys map
+    char c = key.size() == 1 
+        ? key[0]
+        : keys[key];
+
+    return keyCode == toupper(c);
 }
 
 bool Hotkey::handleKeyPress(DWORD keycode, WorkspaceManager &workspaceManager) {

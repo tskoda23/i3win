@@ -46,8 +46,7 @@ void buildSplitLayout(Workspace &workspace) {
     int totalPadding = additionalPadding * (workspace.windows.size() - 1);
 
     int mainWindowWidth = workspace.screenWidth * getMainWindowWidthPercentage(workspace) / 100;
-    int a = workspace.windows.size();
-    int otherWindowsWidth = (workspace.screenWidth - mainWindowWidth - totalPadding) / (a - 1);
+    int otherWindowsWidth = (workspace.screenWidth - mainWindowWidth - totalPadding) / (workspace.windows.size() - 1);
 
     int windowCount = 0;
 

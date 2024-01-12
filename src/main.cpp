@@ -25,7 +25,7 @@ HHOOK g_keyboardHook;
 Hotkey hotkey;
 WorkspaceManager workspaceManager = WorkspaceManager();
 
-std::mutex windowStateMutex;
+mutex windowStateMutex;
 
 bool debug = true;
 bool showRealTimeState = false;
