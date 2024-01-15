@@ -7,10 +7,8 @@
 #include "logger.h"
 #include "environment.h"
 
-static std::string statePath = getAppStoragePath() + "i3win.state";
-
 void State::loadStateData() {
-    std::ifstream inputFile(statePath);
+    std::ifstream inputFile(storagePath);
 
     if (!inputFile.is_open()) {
         logError("Error opening the state file!");
@@ -43,10 +41,10 @@ void State::loadStateData() {
 void State::setValue(std::string key, std::string value) {
     values[key] = value;
 
-    std::ofstream outFile(statePath, std::ofstream::trunc);
+    std::ofstream outFile(storagePath, std::ofstream::trunc);
 
     if (!outFile.is_open()) {
-        outFile.open(statePath);
+        outFile.open(storagePath);
     }
 
     if (outFile.is_open()) {
@@ -65,15 +63,12 @@ void State::reload() {
 }
 
 State::State() {
+    this->storagePath = getAppStoragePath() + "i3win.state";
     loadStateData();
 }
 
 int State::getNumericValue(std::string key) {
-    auto value = values[key];
-
-    if (value.empty()) {
-        value = defaultStateValues[key];
-    }
+    auto value = getValue(key);
 
     try {
         return std::stoi(value);
@@ -86,9 +81,16 @@ int State::getNumericValue(std::string key) {
 }
 
 std::string State::getValue(std::string key) {
+    if (key.empty()) {
+        logError("Empty key provided for value");
+        throw;
+    }
+
     auto value = values[key];
 
      if (value.empty()) {
         return defaultStateValues[key];
     }
+
+     return value;
 }

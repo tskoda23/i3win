@@ -7,13 +7,13 @@
 #include "logger.h"
 #include "environment.h"
 
-static std::string configPath = getAppStoragePath() + "i3win.conf";
-
 void Config::loadConfigurationData() {  
-    std::ifstream inputFile(configPath);
+    std::ifstream inputFile(storagePath);
+
+    getAppStoragePath();
 
     if (!inputFile.is_open()) {
-        logError("Error opening the config file! " + configPath);
+        logError("Error opening the config file! " + storagePath);
         return;
     }
 
@@ -46,15 +46,12 @@ void Config::reload() {
 }
 
 Config::Config() {
+    this->storagePath = getAppStoragePath() + "i3win.conf";
     loadConfigurationData();
 }
 
-int Config::getNumericValue(std::string key) {
-    auto value = configValues[key];
-
-    if (value.empty()) {
-        value = defaultConfigValues[key];
-    }
+int Config::getNumericValue(const std::string &key) {
+    auto value = getValue(key);
 
     try {
         return std::stoi(value);
@@ -67,11 +64,24 @@ int Config::getNumericValue(std::string key) {
     
 }
 
-std::string Config::getValue(std::string key) {
+std::string Config::getValue(const std::string &key) {
+    if (key.empty()) {
+        logError("Empty key provided for value");
+        throw;
+    }
+
     auto value = configValues[key];
 
      if (value.empty()) {
         return defaultConfigValues[key];
-    }
+     }
+
+     if (value[0] == '"') {
+         auto err = "Config values shouldn't be wrapped in quotes.";
+         logError(err);
+         throw err;
+     }
+
+     return value;
 }
 
