@@ -141,6 +141,15 @@
     <ClCompile Include="src\workspace.cpp" />
     <ClCompile Include="src\workspace_manager.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src/resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src/i3win.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\icon.ico" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
