@@ -19,17 +19,25 @@
 #include "workspace.h"
 #include "resource.h"
 
+
 using namespace std;
 
-HHOOK g_keyboardHook;
+// We'll use globals until we figure out something better 
 
+HHOOK g_keyboardHook;
 Hotkey hotkey;
 WorkspaceManager workspaceManager = WorkspaceManager();
-
 mutex windowStateMutex;
 
 bool debug = true;
 bool showRealTimeState = false;
+bool Running;
+
+const COLORREF MASK_COLOR = RGB(255, 128, 0);
+const COLORREF BORDER_COLOR = RGB(87, 172, 227);
+
+HWND mainWindowHandle;
+const wchar_t  title[14] = L"mau5trapi3win";
 
 BOOL IsWindowCloaked(HWND hwnd)
 {
@@ -69,10 +77,6 @@ bool hasTitle(HWND hwnd){
 }
 
 BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
-    HWND fWinH = GetForegroundWindow();
-    Window newFwin = getWindowFromHWND(fWinH);
-    newFwin.isInitialized = 1;
-
     // Exit early if window is popup or something not a real window
     if (!IsMainWindow(hwnd) || !hasTitle(hwnd)) {
         return TRUE;
@@ -82,14 +86,24 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
 
     registerNewWindow(window);
 
+    HWND fHwnd = GetForegroundWindow();
+
+
     auto activeWorkspace = workspaceManager.getActiveWorkspace();
 
-    if(activeWorkspace->focusedWindow.isInitialized == 0
-        || activeWorkspace->focusedWindow.hwnd != newFwin.hwnd) {
-        activeWorkspace->setFocusedWindow(newFwin);
+    if(activeWorkspace->focusedWindow.hwnd != fHwnd) {
+        Window focusedWindow = getWindowFromHWND(fHwnd);
+        activeWorkspace->setFocusedWindow(focusedWindow);
+        RECT rect;
+        if(GetWindowRect(fHwnd, &rect))
+        {
+            int width = rect.right - rect.left;
+            int height = rect.bottom - rect.top;
+            MoveWindow(mainWindowHandle, rect.left, rect.top, width, height, TRUE);
+        }
     }
 
-    return TRUE;
+   return TRUE;
 }
 
 int CATCH_KEYBOARD_EVENT = -1;
@@ -127,18 +141,20 @@ void printWindowState(const Workspace &workspace) {
              return;
          }
 
-        cout << "Workspace " << workspace->workspaceIndex << endl;
+        string log = "";
+
+        log += "Workspace " + to_string(workspace->workspaceIndex) + "\n";
 
         int position = 0;
         for (auto window : workspace->windows) {
-            cout << "  " << position++ << " - " << window.title;
+            log += " " + to_string(position++) + " - " + window.title;
 
             if (window.hwnd == workspace->focusedWindow.hwnd) {
-                cout << " - FOCUSED";
+                log += " - FOCUSED";
             }
-
-            cout << endl;
+            log += "\n";
         }
+        logInfo(log);
     });
 }
 
@@ -181,8 +197,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPA
                         break;
 
                     case IDM_MENU_ITEM2:
-                        // Perform action for Menu Item 2
-                        MessageBox(hwnd, L"Menu Item 2 selected", L"Info", MB_OK | MB_ICONINFORMATION);
+                        Running = false;
                         break;
                 }
                 break;
@@ -196,6 +211,32 @@ LRESULT CALLBACK MainWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPA
             HideTrayIcon();
             DestroyIcon(nidApp.hIcon); // Release the loaded icon
             PostQuitMessage(0);
+            break;
+        case WM_PAINT:
+            {
+                PAINTSTRUCT ps{};
+                HDC hdc = BeginPaint(hwnd, &ps);
+
+                HPEN hPen = CreatePen(PS_SOLID, 5, BORDER_COLOR);
+                HBRUSH hBrush = CreateSolidBrush(MASK_COLOR);
+                HGDIOBJ hOldPen = SelectObject(hdc, hPen);
+                HGDIOBJ hOldBrush = SelectObject(hdc, hBrush);
+                RECT rect; 
+                GetClientRect(hwnd, &rect);
+                Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+
+                if (hOldPen)
+                    SelectObject(hdc, hOldPen);
+                if (hOldBrush)
+                    SelectObject(hdc, hOldBrush);
+                if (hPen)
+                    DeleteObject(hPen);
+                if (hBrush)
+                    DeleteObject(hBrush);
+
+                EndPaint(hwnd, &ps);
+            }
+
             break;
 
         default:
@@ -223,7 +264,7 @@ int buildTrayIcon(HWND hwnd) {
     // Create a context menu
     hContextMenu = CreatePopupMenu();
     AppendMenu(hContextMenu, MF_STRING, IDM_MENU_ITEM1, L"Menu Item 1");
-    AppendMenu(hContextMenu, MF_STRING, IDM_MENU_ITEM2, L"Menu Item 2");
+    AppendMenu(hContextMenu, MF_STRING, IDM_MENU_ITEM2, L"Exit");
 
     ShowTrayIcon();
 
@@ -231,7 +272,7 @@ int buildTrayIcon(HWND hwnd) {
 }
 
 void checkWindowState() {
-    while (true) {
+    while (Running) {
         unique_lock<mutex> lock(windowStateMutex);
 
         workspaceManager.getActiveWorkspace()->onBeforeWindowsRegistered();
@@ -248,54 +289,67 @@ void checkWindowState() {
 
         lock.unlock();
 
-        this_thread::sleep_for(chrono::seconds(1));
+        this_thread::sleep_for(50ms);
     }
 }
 
-void buildMainWindow(HINSTANCE hInstance) {
+int buildMainWindow(HINSTANCE hInstance) {
     WNDCLASSEX wc = { sizeof(WNDCLASSEX) };
     auto className = L"FunnyWindowManager";
+    wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = MainWindowProcedure;
     wc.hInstance = hInstance;
     wc.lpszClassName = className; 
     RegisterClassEx(&wc);
 
     // Create the i3win main window
-    HWND hwnd = CreateWindow(className, L"SomeTitle", WS_OVERLAPPEDWINDOW,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, nullptr, nullptr, hInstance, nullptr);
 
+    HWND hwnd = CreateWindowExW( WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_NOACTIVATE, 
+                            className, title, WS_POPUP,
+                             0, 0, 0, 0, nullptr, nullptr, hInstance, nullptr);
     if (hwnd) {
-        ShowWindow(hwnd, SW_SHOWNORMAL);
+        mainWindowHandle = hwnd;
+        SetLayeredWindowAttributes(hwnd, MASK_COLOR, 255, LWA_COLORKEY);
+        ShowWindow(hwnd, SW_SHOW);
         buildTrayIcon(hwnd);
         UpdateWindow(hwnd);
         ShowTrayIcon();
+        return 1;
     } else {
-        std::cout << "Failed to create window" << std::endl;
+        logError("Failed to create window");
+        return 0;
     }
 }
 
-int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR  lpCmdLine, int nCmdShow) {
     g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
 
     if (g_keyboardHook == NULL) {
-        cerr << "Error setting up low level keyboard hook" << endl;
+        logError("Error setting up low level keyboard hook");
         return 1;
     }
 
     logInfo("***    Window manager started ***");
 
-    // Check window state each second and update layout
-    future<void> asyncResult = async(launch::async, checkWindowState);
+    int win = buildMainWindow(hInstance);
 
-    buildMainWindow(hInstance);
+    if(win){
+        // Check window state each second and update layout
+        future<void> asyncResult = async(launch::async, checkWindowState);
 
-    // Message loop or other application logic goes here
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        Running = true;
+        while (Running) {
+            MSG msg;
+            BOOL result = GetMessage(&msg, 0, 0, 0);
+            if(result > 0){
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }else{
+                Running = false;
+                break;
+            }
+        }
     }
-
     // Remove hooks after done
     UnhookWindowsHookEx(g_keyboardHook);
 

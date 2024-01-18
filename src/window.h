@@ -13,7 +13,6 @@ struct Window {
     LONG top;
     LONG right;
     LONG bottom;
-    int isInitialized = 0;
 
     bool isHidden();
     bool move(int x, int y, int width, int height);

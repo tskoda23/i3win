@@ -29,6 +29,7 @@ class Workspace {
         void addWindow(Window& window);
         void removeWindow(HWND hwnd);
         void setFocusedWindow(Window window);
+        void setFocusedWindowWin(Window window);
         void setActiveLayout(LayoutType layout);
         void moveFocusLeft();
         void moveFocusRight();

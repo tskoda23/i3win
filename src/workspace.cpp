@@ -41,7 +41,12 @@ void Workspace::removeWindow(HWND hwnd) {
 void Workspace::setFocusedWindow(Window window) {
     if (window.hwnd != NULL) {
         focusedWindow = window;
-        SetForegroundWindow(focusedWindow.hwnd); // TODO: Maybe move this out of this class?
+    }
+}
+
+void Workspace::setFocusedWindowWin(Window window){
+    if (window.hwnd != NULL) {
+        SetForegroundWindow(window.hwnd); // TODO: Maybe move this out of this class?
     }
 }
 
@@ -52,7 +57,7 @@ void Workspace::setActiveLayout(LayoutType layout) {
 
 void Workspace::moveFocusLeft(){
     if (focusedWindow.hwnd == NULL && !windows.empty()) {
-        setFocusedWindow(windows.front());
+        setFocusedWindowWin(windows.front());
     }
 
     HWND hwnd = focusedWindow.hwnd;
@@ -64,7 +69,7 @@ void Workspace::moveFocusLeft(){
     );
 
     if (window != windows.begin()) {
-        setFocusedWindow(*std::prev(window));
+        setFocusedWindowWin(*std::prev(window));
         logInfo("Focus moved to left");
     } else {
         logInfo("Can't move to left, already at the edge");
@@ -73,7 +78,7 @@ void Workspace::moveFocusLeft(){
 
 void Workspace::moveFocusRight(){
     if (focusedWindow.hwnd == NULL && !windows.empty()) {
-        setFocusedWindow(windows.front());
+        setFocusedWindowWin(windows.front());
     }
 
     HWND hwnd = focusedWindow.hwnd;
@@ -85,7 +90,7 @@ void Workspace::moveFocusRight(){
     );
 
     if (window != windows.end() && std::next(window) != windows.end()) {
-        setFocusedWindow(*std::next(window));
+        setFocusedWindowWin(*std::next(window));
         logInfo("Focus moved to right");
     } else {
         logInfo("Can't move to right, already at the edge");
@@ -169,7 +174,7 @@ void Workspace::setAsMainWindow() {
     if (window != windows.end()) {
         lastWindowSwappedWithMainWindow = windows.front().hwnd;
         std::iter_swap(window, windows.begin());
-        setFocusedWindow(windows.front());
+        setFocusedWindowWin(windows.front());
         logInfo("Window moved to main");
     } else {
         logInfo("Can't set window as main");
