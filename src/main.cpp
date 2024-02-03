@@ -37,7 +37,6 @@ const COLORREF MASK_COLOR = RGB(255, 128, 0);
 const COLORREF BORDER_COLOR = RGB(87, 172, 227);
 
 HWND mainWindowHandle;
-const wchar_t  title[14] = L"mau5trapi3win";
 
 BOOL IsWindowCloaked(HWND hwnd)
 {
@@ -193,7 +192,7 @@ LRESULT CALLBACK MainWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPA
                 switch (LOWORD(wParam)) {
                     case IDM_MENU_ITEM1:
                         // Perform action for Menu Item 1
-                        MessageBox(hwnd, L"Menu Item 1 selected", L"Info", MB_OK | MB_ICONINFORMATION);
+                        MessageBoxA(hwnd, "Menu Item 1 selected", "Info", MB_OK | MB_ICONINFORMATION);
                         break;
 
                     case IDM_MENU_ITEM2:
@@ -263,8 +262,8 @@ int buildTrayIcon(HWND hwnd) {
 
     // Create a context menu
     hContextMenu = CreatePopupMenu();
-    AppendMenu(hContextMenu, MF_STRING, IDM_MENU_ITEM1, L"Menu Item 1");
-    AppendMenu(hContextMenu, MF_STRING, IDM_MENU_ITEM2, L"Exit");
+    AppendMenuA(hContextMenu, MF_STRING, IDM_MENU_ITEM1, "Menu Item 1");
+    AppendMenuA(hContextMenu, MF_STRING, IDM_MENU_ITEM2, "Exit");
 
     ShowTrayIcon();
 
@@ -294,18 +293,16 @@ void checkWindowState() {
 }
 
 int buildMainWindow(HINSTANCE hInstance) {
-    WNDCLASSEX wc = { sizeof(WNDCLASSEX) };
-    auto className = L"FunnyWindowManager";
+    WNDCLASSEXA wc = { sizeof(WNDCLASSEX) };
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = MainWindowProcedure;
     wc.hInstance = hInstance;
-    wc.lpszClassName = className; 
-    RegisterClassEx(&wc);
+    wc.lpszClassName = "FunnyWindowManager"; 
+    RegisterClassExA(&wc);
 
     // Create the i3win main window
-
-    HWND hwnd = CreateWindowExW( WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_NOACTIVATE, 
-                            className, title, WS_POPUP,
+    HWND hwnd = CreateWindowExA( WS_EX_COMPOSITED | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_NOACTIVATE, 
+                            wc.lpszClassName, "mau5trapi3win", WS_POPUP,
                              0, 0, 0, 0, nullptr, nullptr, hInstance, nullptr);
     if (hwnd) {
         mainWindowHandle = hwnd;
@@ -321,7 +318,7 @@ int buildMainWindow(HINSTANCE hInstance) {
     }
 }
 
-int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR  lpCmdLine, int nCmdShow) {
+int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow) {
     g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
 
     if (g_keyboardHook == NULL) {
