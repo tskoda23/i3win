@@ -75,6 +75,21 @@ bool hasTitle(HWND hwnd){
     return length > 0;
 }
 
+
+void drawBorder(HWND hwnd) {
+        RECT rect;
+        if(GetWindowRect(hwnd, &rect))
+        {
+            int width = rect.right - rect.left;
+            int height = rect.bottom - rect.top;
+            MoveWindow(mainWindowHandle, rect.left, rect.top, width, height, TRUE);
+        }
+}
+
+void removeBorder() {
+    MoveWindow(mainWindowHandle, 0, 0, 0, 0, TRUE);
+}
+
 BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     // Exit early if window is popup or something not a real window
     if (!IsMainWindow(hwnd) || !hasTitle(hwnd)) {
@@ -87,18 +102,18 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
 
     HWND fHwnd = GetForegroundWindow();
 
-
     auto activeWorkspace = workspaceManager.getActiveWorkspace();
+
+    if (fHwnd == NULL) {
+        logInfo("REMOVE BORDER");
+        removeBorder();
+        return TRUE;
+    }
 
     if(activeWorkspace->focusedWindow.hwnd != fHwnd) {
         Window focusedWindow = getWindowFromHWND(fHwnd);
-        activeWorkspace->setFocusedWindow(focusedWindow);
-        RECT rect;
-        if(GetWindowRect(fHwnd, &rect))
-        {
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
-            MoveWindow(mainWindowHandle, rect.left, rect.top, width, height, TRUE);
+        if (activeWorkspace->setFocusedWindow(focusedWindow)) {
+            drawBorder(focusedWindow.hwnd);
         }
     }
 

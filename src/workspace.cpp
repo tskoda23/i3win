@@ -38,9 +38,13 @@ void Workspace::removeWindow(HWND hwnd) {
     windows.erase(window);
 }
 
-void Workspace::setFocusedWindow(Window window) {
+bool Workspace::setFocusedWindow(Window window) {
     if (window.hwnd != NULL) {
         focusedWindow = window;
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
