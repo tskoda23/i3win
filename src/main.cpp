@@ -27,11 +27,14 @@ using namespace std;
 HHOOK g_keyboardHook;
 Hotkey hotkey;
 WorkspaceManager workspaceManager = WorkspaceManager();
-mutex windowStateMutex;
+// mutex windowStateMutex;
 
 bool debug = true;
 bool showRealTimeState = false;
 bool Running;
+bool borderDisplayed = false;
+
+const std::chrono::duration<long, std::milli> tick = 1000ms;
 
 const COLORREF MASK_COLOR = RGB(255, 128, 0);
 const COLORREF BORDER_COLOR = RGB(87, 172, 227);
@@ -76,18 +79,48 @@ bool hasTitle(HWND hwnd){
 }
 
 
-void drawBorder(HWND hwnd) {
+void drawBorder(HWND hwnd, POINT pt) {
         RECT rect;
-        if(GetWindowRect(hwnd, &rect))
+        RECT wRect;
+
+        if(GetClientRect(hwnd, &rect) && GetWindowRect(hwnd, &wRect))
         {
             int width = rect.right - rect.left;
             int height = rect.bottom - rect.top;
-            MoveWindow(mainWindowHandle, rect.left, rect.top, width, height, TRUE);
+            MoveWindow(mainWindowHandle, wRect.left + (pt.x / 2), wRect.top, width, height, TRUE);
+
+            borderDisplayed = true;
         }
 }
 
 void removeBorder() {
     MoveWindow(mainWindowHandle, 0, 0, 0, 0, TRUE);
+    borderDisplayed = false;
+}
+
+void resizeWindow(HWND hwnd){
+    // Inside your window procedure or elsewhere in your code where you have access to the window handle (HWND hWnd)
+    RECT windowRect, clientRect;
+    GetClientRect(hwnd, &clientRect); // Get the client rectangle first
+
+    // Calculate the window rectangle including the non-client area
+    windowRect = clientRect;
+    AdjustWindowRectEx(&windowRect, GetWindowLong(hwnd, GWL_STYLE), FALSE, GetWindowLong(hwnd, GWL_EXSTYLE));
+
+    // Calculate the size of the invisible border
+    int borderSizeX = (windowRect.right - windowRect.left) - (clientRect.right - clientRect.left);
+    int borderSizeY = (windowRect.bottom - windowRect.top) - (clientRect.bottom - clientRect.top);
+
+    logInfo("X DIFF: " + to_string(borderSizeX));
+    logInfo("Y DIFF: " + to_string(borderSizeY));
+
+    // clientRect.left += borderSizeX;
+    // clientRect.top += borderSizeY;
+    // clientRect.right -= borderSizeX;
+    // clientRect.bottom -= borderSizeY;
+
+    // // Update the client area size
+    // SetWindowPos(hwnd, NULL, clientRect.left, clientRect.top, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
@@ -100,12 +133,13 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
 
     registerNewWindow(window);
 
-    HWND fHwnd = GetForegroundWindow();
-
     auto activeWorkspace = workspaceManager.getActiveWorkspace();
 
-    if (fHwnd == NULL) {
-        logInfo("REMOVE BORDER");
+    HWND fHwnd = GetForegroundWindow();
+
+    // If we can't get the focused window remove the border.
+    if (fHwnd == NULL && borderDisplayed) {
+        logInfo("NO FOCUSED, REMOVE BORDER");
         removeBorder();
         return TRUE;
     }
@@ -113,7 +147,34 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
     if(activeWorkspace->focusedWindow.hwnd != fHwnd) {
         Window focusedWindow = getWindowFromHWND(fHwnd);
         if (activeWorkspace->setFocusedWindow(focusedWindow)) {
-            drawBorder(focusedWindow.hwnd);
+
+            LONG lStyle = GetWindowLong(focusedWindow.hwnd, GWL_STYLE);
+        
+            logInfo(focusedWindow.title + "TOP: " + to_string(focusedWindow.top) + " BOTTOM: " + to_string(focusedWindow.bottom) + " LEFT: " + to_string(focusedWindow.left)  + " RIGHT: " + to_string(focusedWindow.left));
+
+            RECT rcClient, rcWind;
+            POINT ptDiff;
+            GetClientRect(focusedWindow.hwnd, &rcClient);
+            GetWindowRect(focusedWindow.hwnd, &rcWind);
+
+            ptDiff.x = (rcWind.right - rcWind.left) - rcClient.right;
+            ptDiff.y = (rcWind.bottom - rcWind.top) - rcClient.bottom;
+
+
+            // logInfo("X DIFF: " + to_string(ptDiff.x));
+            // logInfo("Y DIFF: " + to_string(ptDiff.y));
+
+            // if(ptDiff.x > 0 || ptDiff.y > 0){
+            //     RECT clientRect;
+            //     clientRect.left += ptDiff.x;
+            //     clientRect.top += ptDiff.y;
+            //     clientRect.right -= ptDiff.x;
+            //     clientRect.bottom -= ptDiff.y;
+            //     logInfo("RESIZE");
+            //     // Update the client area size
+            // }
+
+            drawBorder(focusedWindow.hwnd, ptDiff);
         }
     }
 
@@ -131,7 +192,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
             // Lock guard's destructor will unlock the mutex automatically at the end of block
 
-            lock_guard<mutex> lock(windowStateMutex);
+            // lock_guard<mutex> lock(windowStateMutex);
             DWORD keycode = pKeyInfo->vkCode;
 
             hotkeyPressed = hotkey.handleKeyPress(keycode, workspaceManager);
@@ -215,7 +276,6 @@ LRESULT CALLBACK MainWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPA
                         break;
                 }
                 break;
-
         case WM_CLOSE:
             HideTrayIcon();
             DestroyWindow(hwnd);
@@ -287,7 +347,7 @@ int buildTrayIcon(HWND hwnd) {
 
 void checkWindowState() {
     while (Running) {
-        unique_lock<mutex> lock(windowStateMutex);
+        // unique_lock<mutex> lock(windowStateMutex);
 
         workspaceManager.getActiveWorkspace()->onBeforeWindowsRegistered();
 
@@ -301,9 +361,8 @@ void checkWindowState() {
             printWindowState(*workspaceManager.getActiveWorkspace());
         }
 
-        lock.unlock();
-
-        this_thread::sleep_for(50ms);
+        // lock.unlock();
+        this_thread::sleep_for(tick);
     }
 }
 
@@ -334,12 +393,12 @@ int buildMainWindow(HINSTANCE hInstance) {
 }
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow) {
-    g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
+    // g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, GetModuleHandle(NULL), 0);
 
-    if (g_keyboardHook == NULL) {
-        logError("Error setting up low level keyboard hook");
-        return 1;
-    }
+    // if (g_keyboardHook == NULL) {
+    //     logError("Error setting up low level keyboard hook");
+    //     return 1;
+    // }
 
     logInfo("***    Window manager started ***");
 
@@ -362,8 +421,8 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
             }
         }
     }
-    // Remove hooks after done
-    UnhookWindowsHookEx(g_keyboardHook);
+
+    // UnhookWindowsHookEx(g_keyboardHook);
 
     return 0;
 }

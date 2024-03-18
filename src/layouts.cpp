@@ -75,7 +75,6 @@ void buildSplitLayout(Workspace &workspace) {
             windowCount++;
         }
     }
-    
 }
 
 void buildCenteredLayout(Workspace &workspace) {
