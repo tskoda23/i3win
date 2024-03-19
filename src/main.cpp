@@ -34,7 +34,7 @@ bool showRealTimeState = false;
 bool Running;
 bool borderDisplayed = false;
 
-const std::chrono::duration<long, std::milli> tick = 1000ms;
+const std::chrono::duration<long, std::milli> tick = 16ms;
 
 const COLORREF MASK_COLOR = RGB(255, 128, 0);
 const COLORREF BORDER_COLOR = RGB(87, 172, 227);
@@ -79,18 +79,34 @@ bool hasTitle(HWND hwnd){
 }
 
 
-void drawBorder(HWND hwnd, POINT pt) {
-        RECT rect;
-        RECT wRect;
+void drawBorder(HWND hwnd) {
 
-        if(GetClientRect(hwnd, &rect) && GetWindowRect(hwnd, &wRect))
-        {
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
-            MoveWindow(mainWindowHandle, wRect.left + (pt.x / 2), wRect.top, width, height, TRUE);
+        RECT rect, wRect;
+        POINT ptDiff;
+        if(GetClientRect(hwnd, &rect) && GetWindowRect(hwnd, &wRect)){
+            ptDiff.x = (wRect.right - wRect.left) - rect.right;
+            ptDiff.y = (wRect.bottom - wRect.top) - rect.bottom;
+
+            int width = wRect.right - wRect.left;
+            int height = wRect.bottom - wRect.top;
+
+            int x = wRect.left;
+            int y = wRect.top;
+        
+            if(ptDiff.x > 0){
+                x += ptDiff.x / 2;
+                width = rect.right - rect.left;
+            }
+
+            if(ptDiff.y > 0){
+                height = rect.bottom - rect.top;
+            }
+
+            MoveWindow(mainWindowHandle, x, y, width, height, TRUE);
 
             borderDisplayed = true;
         }
+
 }
 
 void removeBorder() {
@@ -152,29 +168,7 @@ BOOL CALLBACK handleWindow(HWND hwnd, LPARAM lParam) {
         
             logInfo(focusedWindow.title + "TOP: " + to_string(focusedWindow.top) + " BOTTOM: " + to_string(focusedWindow.bottom) + " LEFT: " + to_string(focusedWindow.left)  + " RIGHT: " + to_string(focusedWindow.left));
 
-            RECT rcClient, rcWind;
-            POINT ptDiff;
-            GetClientRect(focusedWindow.hwnd, &rcClient);
-            GetWindowRect(focusedWindow.hwnd, &rcWind);
-
-            ptDiff.x = (rcWind.right - rcWind.left) - rcClient.right;
-            ptDiff.y = (rcWind.bottom - rcWind.top) - rcClient.bottom;
-
-
-            // logInfo("X DIFF: " + to_string(ptDiff.x));
-            // logInfo("Y DIFF: " + to_string(ptDiff.y));
-
-            // if(ptDiff.x > 0 || ptDiff.y > 0){
-            //     RECT clientRect;
-            //     clientRect.left += ptDiff.x;
-            //     clientRect.top += ptDiff.y;
-            //     clientRect.right -= ptDiff.x;
-            //     clientRect.bottom -= ptDiff.y;
-            //     logInfo("RESIZE");
-            //     // Update the client area size
-            // }
-
-            drawBorder(focusedWindow.hwnd, ptDiff);
+            drawBorder(focusedWindow.hwnd);
         }
     }
 

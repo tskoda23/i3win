@@ -41,14 +41,29 @@ void buildStackedLayout(Workspace &workspace) {
     }
 }
 
+POINT getWinSizeDiff(HWND hwnd){
+    RECT rcClient, rcWind;
+    POINT ptDiff;
+    GetClientRect(hwnd, &rcClient);
+    GetWindowRect(hwnd, &rcWind);
+
+    ptDiff.x = (rcWind.right - rcWind.left) - rcClient.right;
+    ptDiff.y = (rcWind.bottom - rcWind.top) - rcClient.bottom;
+    return ptDiff;
+}
+
 void buildSplitLayout(Workspace &workspace) {
+    // USE RESIZING HERE
     int additionalPadding = workspace.config.getNumericValue(ADDITIONAL_WINDOW_PADDING);
     int totalPadding = additionalPadding * (workspace.windows.size() - 1);
 
     int mainWindowWidth = workspace.screenWidth * getMainWindowWidthPercentage(workspace) / 100;
     int otherWindowsWidth = (workspace.screenWidth - mainWindowWidth - totalPadding) / (workspace.windows.size() - 1);
+    int height = workspace.screenHeight - taskbarSize;
 
     int windowCount = 0;
+
+
 
     for (auto window : workspace.windows) {
         bool isMainWindow = windowCount == 0;
@@ -65,11 +80,34 @@ void buildSplitLayout(Workspace &workspace) {
             ? mainWindowWidth
             : otherWindowsWidth;
 
+        // HEHEHE
+
+        RECT rect;
+        RECT wRect;
+        POINT ptDiff;
+        GetClientRect(window.hwnd, &rect);
+        GetWindowRect(window.hwnd, &wRect);
+
+        ptDiff.x = (wRect.right - wRect.left) - rect.right;
+        ptDiff.y = (wRect.bottom - wRect.top) - rect.bottom;
+
+        /////////
+
+
+        if(ptDiff.x > 0){
+            width += ptDiff.x;
+            xPosition -= ptDiff.x /2;
+        }
+
+        if(ptDiff.y > 0){
+            height += ptDiff.y;
+        }
+
         bool isWindowMovedSuccessfully = window.move(
             xPosition,
             0,
             width,
-            workspace.screenHeight - taskbarSize);
+            height);
 
         if (isWindowMovedSuccessfully) {
             windowCount++;
